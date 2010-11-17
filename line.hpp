@@ -1,4 +1,4 @@
-/*	line.hpp  v 0.1.3.10.1117
+/*	line.hpp  v 0.1.4.10.1117
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -24,9 +24,7 @@
 #include <limits>
 #include <complex>
 #include "point.hpp"
-
-// TODO: this is segment, make another line class?
-//       could need significant changes
+#include "segment.hpp"
 
 namespace euclib {
 
@@ -35,7 +33,8 @@ class line2 {
 // Typdefs
 protected:
 
-	typedef std::numeric_limits<T> limit_t;
+	typedef std::numeric_limits<T>     limit_t;
+	typedef std::numeric_limits<float> float_limit_t;
 
 	// This class can only be used with scalar types
 	//   or types with a specific specialization
@@ -60,25 +59,18 @@ public:
 	line2( const line2<T>& line ) { *this = line; }
 	line2( line2<T>&& line ) { *this = std::move( line ); }
 	line2( const point2<T>& p1, const point2<T>& p2 ) {
-		if( less_equal( p1.x, p2.x ) ) {
-			pt1 = p1;
-			pt2 = p2;
-		}
-		else {
-			pt1 = p2;
-			pt2 = p1;
-		}
+		pt1 = p1;
+		pt2 = p2;
 		check_valid( );
 	}
 	line2( T x1, T y1, T x2, T y2 ) {
-		if( less_equal( x1, x2) ) {
-			pt1 = point2<T>{ x1, y1 };
-			pt2 = point2<T>{ x2, y2 };
-		}
-		else {
-			pt1 = point2<T>{ x2, y2 };
-			pt2 = point2<T>{ x1, y1 };
-		}
+		pt1 = point2<T>{ x1, y1 };
+		pt2 = point2<T>{ x2, y2 };
+		check_valid( );
+	}
+	line2( const segment2<T>& segment ) {
+		pt1 = segment.pt1;
+		pt2 = segment.pt2;
 		check_valid( );
 	}
 
@@ -93,132 +85,62 @@ public:
 		return null;
 	}
 
-	T width( )  const { return std::abs( pt1.x - pt2.x ); }
-	T height( ) const { return std::abs( pt1.y - pt2.y ); }
-	
-	// TODO: I don't like forcing these to float...
-
 	float slope( ) const {
-		if( std::abs( pt1.x - pt2.x ) <= limit_t::epsilon( ) ) { // same x coordinate
-			return std::numeric_limits<float>::infinity( );
+		// same x coordinate
+		if( equal(pt1.x, pt2.x) ) {
+			return float_limit_t::infinity( );
 		}
 		
-		return (float)( (pt2.y - pt1.y) / (pt2.x - pt1.x) );		
+		return static_cast<float>(pt2.y-pt1.y) / static_cast<float>(pt2.x-pt1.x);
 	}
 	
-	float length( ) const {
-		return sqrt( (float)( width( )*width( ) + height( )*height( ) ) );
+	T intercept( ) const {
+		if( slope( ) == float_limit_t::infinity( ) ) {
+			return float_limit_t::infinity( );
+		}
+
+		float tmp = slope( ) * static_cast<float>(pt1.x);
+		if( limit_t::is_integer ) { tmp += 0.5f; } // reduce rounding errors
+
+		return pt1.y - static_cast<T>(tmp);
+	}
+
+	T at_x( T x ) const {
+		float slp = slope( );
+		// vertical line
+		if( slp == float_limit_t::infinity( ) ) {
+			return invalid;
+		}
+		// horizontal line
+		else if( equal( slp, 0.f ) ) {
+			return pt1.y;
+		}
+
+		float tmp = slp * static_cast<float>(x);
+		if( limit_t::is_integer ) { tmp += 0.5f; } // reduce rounding errors
+		return intercept( ) + static_cast<T>(tmp);
 	}
 	
-	float intercept( ) const {
-		if( slope( ) == std::numeric_limits<float>::infinity( ) ) {
-			return std::numeric_limits<float>::infinity( );
+	T at_y( T y ) const {
+		float slp = slope( );
+		// vertical line
+		if( slp == float_limit_t::infinity( ) ) {
+			return pt1.x;
 		}
-		return (float)( pt1.y - slope( ) * pt1.x );
+		// horizontal line
+		else if( equal( slp, 0.f ) ) {
+			return invalid;
+		}
+
+		float tmp = static_cast<float>( pt1.x - intercept( ) );
+		if( limit_t::is_integer ) { tmp += 0.5f; } // reduce rounding errors
+		return static_cast<T>( tmp / slp );
 	}
 
-
-	// TODO: What to do about the inter/extrapolate functions
-	//       they are cluttered, an may not have a use in a segment class
-
-	// Extrapolate beyond the bounds of the line segment.
-	// Distance: the length beyond the line to move, sign determines direction.
-	point2<T> extrapolate( float distance ) {
-		T delX = sqrt( ( distance * distance ) / ( 1 + slope( ) * slope( ) ) );
-		T delY = slope( ) * delX;
-		if ( less_than( distance, 0.f ) ) {
-			return point2<T>{ pt1.x - delX, pt1.y - delY };
-		}
-		else {
-			return point2<T>{ pt2.x + delX, pt2.y + delY };
-		}
-	}
-
-	// value: value(on axis) beyond the line to move, sign determines direction.
-	point2<T> extrapolateX( T value ) {
-		if ( equal( value, 0 ) ) { return pt1; }
-		T delX = value;
-		T delY = slope( ) * delX;
-		if ( less_than( value, 0 ) ) {
-			return point2<T>{ pt1.x + delX, pt1.y + delY };
-		}
-		else {
-			return point2<T>{ pt2.x + delX, pt2.y + delY };
-		}
-	}
-	
-	point2<T> extrapolateY( T value ) {
-		if ( equal( value, 0 ) ) { return pt1; }
-		T delY = value;
-		T delX = delY / slope( );
-		if ( less_than( value, 0 ) ) {
-			return point2<T>{ pt1.x + delX, pt1.y + delY };		
-		}
-		else { // value < 0
-			return point2<T>{ pt2.x + delX, pt2.y + delY };
-		}
-	}
-
-	// Interpolate between the bounds of the line segment.
-	// Distance: the length along the line to move, sign determines direction.
-	point2<T> interpolate( float distance ) {
-		if ( ( greater_than( distance, 0.f ) ? distance : -distance ) >= length( ) ) {
-			return ( distance > 0 ? pt2 : pt1 );
-		}
-		T delX = sqrt( ( distance * distance ) / ( 1 + slope( ) * slope( ) ) );
-		T delY = slope( ) * delX;
-		if ( distance < 0 ) {
-			return point2<T>( pt1.x + delX, pt1.y + delY );
-		}
-		else {
-			return point2<T>( pt2.x - delX, pt2.y - delY );
-		} 
-	}
-
-	point2<T> interpolateX( T value ) {
-		if ( ( value > 0 ? value : -value ) >= width( ) ) {
-			return ( value > 0 ? pt2 : pt1 );
-		}
-		T delX = value;
-		T delY = slope( ) * delX;
-		if ( value < 0 ) {
-			return point2<T>( pt1.x - delX, pt1.y - delY );
-		}
-		else {
-			return point2<T>( pt2.x - delX, pt2.y - delY );
-		}
-	}
-
-	point2<T> interpolateY( T value ) {
-		if ( ( value > 0 ? value : -value ) >= height( ) ) {
-			return ( value > 0 ? pt2 : pt1 );
-		}
-		T delY = value;
-		T delX = delY / slope( );
-		if ( value < 0 ) {
-			return point2<T>( pt1.x - delX, pt1.y - delY );
-		}
-		else {
-			return point2<T>( pt2.x - delX, pt2.y - delY );
-		}
-	}
-
-	void print( std::ostream& stream, bool newline = false ) const {
-		pt1.print( stream, false );
-		stream << "->";
-		pt2.print( stream, false);
-		if( newline ) { stream << "\n"; }
-	}
-	
-	void gnuplot( std::ostream& stream ) const {
-		pt1.gnuplot( stream );
-		pt2.gnuplot( stream );
-		stream << "e\n";
-	}
 
 private:
 
-	void check_valid( ) {
+	inline void check_valid( ) {
 		if( pt1 == point2<T>::null( ) || pt2 == point2<T>::null( ) ) {
 			set_null( );
 		}
@@ -227,7 +149,7 @@ private:
 		}
 	}
 	
-	void set_null( ) {
+	inline void set_null( ) {
 		pt1 = pt2 = point2<T>::null( );
 	}
 
@@ -243,9 +165,8 @@ public:
 	}
 	
 	line2<T>& operator = ( line2<T>&& line ) {
-		pt1 = line.pt1;
-		pt2 = line.pt2;
-		line.pt1 = line.pt2 = { }; // line will be deleted after this call
+		std::swap( pt1, line.pt1 );
+		std::swap( pt2, line.pt2 );
 		check_valid( );
 		return *this;
 	}
@@ -258,6 +179,23 @@ public:
 	
 	bool operator != ( const line2<T>& line ) const {
 		return !(*this == line);
+	}
+	
+	// TODO: gnuplot cannot handle inf in equation
+	//       needs some work to properly handle everything
+	friend std::ostream& operator << ( std::ostream& stream,
+	                                   const line2<T>& line ) {
+		#ifdef GNUPLOT
+			if( line.slope( ) == float_limit_t::infinity( ) ) {
+				return stream << "(y) = " << line.pt1.x << "\n";
+			}
+			else {
+				return stream << "(x) = " << line.slope( )
+				              << " * x + " << line.intercept( ) << "\n";
+			}
+		#else
+			return stream << line.pt1 << "-->" << line.pt2;
+		#endif
 	}
 
 

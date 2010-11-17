@@ -1,4 +1,4 @@
-/*	polygon.hpp  v 0.1.0.10.1117
+/*	polygon.hpp  v 0.1.1.10.1117
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -27,7 +27,7 @@
 #include <algorithm>
 #include "point.hpp"
 #include "rect.hpp"
-#include "line.hpp"
+#include "segment.hpp"
 
 namespace euclib {
 
@@ -163,9 +163,9 @@ public:
 	
 	void gnuplot( std::ostream& stream ) const {
 		for( unsigned int i = 0; i < m_hull.size( ); ++i ) {
-			m_hull[i].gnuplot( stream );
+			stream << m_hull[i];
 		}
-		m_hull[0].gnuplot( stream );
+		stream << m_hull[0];
 		stream << "e\n";
 	}
 
@@ -232,8 +232,8 @@ private:
 					stack.push_back( *itr );
 				}
 				else if( std::abs(dir) <= limit_t::epsilon( ) ) {
-					float d1 = line2<T>( *(stack.rbegin( )+1), *itr ).length( );
-					float d2 = line2<T>( *(stack.rbegin( )+1), *stack.rbegin( ) ).length( );
+					float d1 = segment2<T>( *(stack.rbegin( )+1), *itr ).length( );
+					float d2 = segment2<T>( *(stack.rbegin( )+1), *stack.rbegin( ) ).length( );
 					if( d1 - d2 > std::numeric_limits<float>::epsilon( ) ) {
 						stack.pop_back( );
 						--itr;
@@ -329,6 +329,22 @@ public:
 		m_bounding_box = poly.m_bounding_box;
 		std::swap( m_hull, poly.m_hull );
 		return *this;
+	}
+	
+	friend std::ostream& operator << ( std::ostream& stream, const polygon2<T>& poly ) {
+		#ifdef GNUPLOT
+			for( unsigned int i = 0; i < poly.m_hull.size( ); ++i ) {
+				stream << poly.m_hull[i];
+			}
+			stream << poly.m_hull[0];
+			return stream << "e\n";
+		#else
+			stream << "Polygon: size = " << poly.m_hull.size( ) << "\n  ";
+			for( unsigned int i = 0; i < poly.m_hull.size( ); ++i ) {
+				stream << ( i != 0 ? "->" : "" ) << poly.m_hull[i];
+			}
+			return stream;
+		#endif
 	}
 
 

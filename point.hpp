@@ -1,4 +1,4 @@
-/*	point.hpp  v 0.1.5.10.1117
+/*	point.hpp  v 0.1.6.10.1117
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -28,10 +28,12 @@ namespace euclib {
 
 	// Helper functions for comparisons, because no assumptions
 	//   can be made about the exactness of type T
+	// TODO: move into own header file
 
 	template<typename T>
 	bool equal( T lhs, T rhs ) {
-		return std::abs( lhs - rhs ) <= std::numeric_limits<T>::epsilon( );
+		return lhs == rhs ||
+		       std::abs( lhs - rhs ) <= std::numeric_limits<T>::epsilon( );
 	}
 
 	template<typename T>
@@ -75,7 +77,8 @@ protected:
 public:
 
 	T x, y;
-	
+
+
 private:
 
 	static T invalid; // holds either limit_t::infinity or limit_t::max
@@ -100,27 +103,16 @@ public:
 		return null;
 	}
 
-	// TODO: maybe make this a little easier to use
-	//       i.e. have version that returns string or something
-	void print( std::ostream& stream, bool newline = false ) const {
-		stream << "[" << x << ", " << y << "]";
-		if( newline ) { stream << "\n"; }
-	}
-	
-	// TODO: debugging only
-	void gnuplot( std::ostream& stream ) const {
-		stream << x << " " << y << "\n";
-	}
 
 private:
 
-	void check_valid( ) {
+	inline void check_valid( ) {
 		if( x == invalid || y == invalid ) {
 			set_null( );
 		}
 	}
-	
-	void set_null( ) {
+
+	inline void set_null( ) {
 		x = y = invalid;
 	}
 
@@ -137,9 +129,8 @@ public:
 
 	// Move assignment, takes advantage of rvalues
 	point2<T>& operator = ( point2<T>&& pt ) {
-		x = pt.x;
-		y = pt.y;
-		pt.x = pt.y = 0; // pt will be deleted after this call
+		std::swap( x, pt.x );
+		std::swap( y, pt.y );
 		check_valid( );
 		return *this;
 	}
@@ -160,12 +151,21 @@ public:
 		
 		return false;
 	}
-	
+
 	bool operator != ( const point2<T>& pt ) const {
 		return !(*this == pt);
 	}
-	
-	
+
+	friend std::ostream& operator << ( std::ostream& stream,
+	                                   const point2<T>& pt ) {
+		#ifdef GNUPLOT
+			return stream << pt.x << " " << pt.y << "\n";
+		#else
+			return stream << "[" << pt.x << ", " << pt.y << "]";
+		#endif
+	}
+
+
 }; // End class point2<T>
 
 typedef point2<int>           point2i;

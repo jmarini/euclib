@@ -22,6 +22,7 @@
 
 #include "point.hpp"
 #include "line.hpp"
+#include "segment.hpp"
 #include "rect.hpp"
 #include "polygon.hpp"
 

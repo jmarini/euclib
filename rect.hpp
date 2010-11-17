@@ -1,4 +1,4 @@
-/*	rect.hpp  v 0.1.2.10.1117
+/*	rect.hpp  v 0.1.3.10.1117
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -95,21 +95,6 @@ public:
 	
 	T area( )      const { return width( ) * height( ); }
 	T perimeter( ) const { return 2 * width( ) + 2 * height( ); }
-	
-	void print( std::ostream& stream, bool newline = false ) const {
-		stream << l << " " << r << " " << t << " " << b;
-		if( newline ) { stream << "\n"; }
-	}
-	
-	// TODO: debugging only
-	void gnuplot( std::ostream& stream ) const {
-		stream << l << " " << t << "\n"
-		       << r << " " << t << "\n"
-		       << r << " " << b << "\n"
-		       << l << " " << b << "\n"
-		       << l << " " << t << "\n"
-		       << "e\n";
-	}
 
 private:
 
@@ -179,6 +164,20 @@ public:
 	
 	bool operator != ( const rect2<T>& rect ) const {
 		return !(*this == rect);
+	}
+	
+	friend std::ostream& operator << ( std::ostream& stream, const rect2<T>& rect ) {
+		#ifdef GNUPLOT
+			return stream << rect.l << " " << rect.t << "\n"
+			              << rect.r << " " << rect.t << "\n"
+			              << rect.r << " " << rect.b << "\n"
+			              << rect.l << " " << rect.b << "\n"
+			              << rect.l << " " << rect.t << "\n"
+			              << "e\n";
+		#else
+			return stream << rect.l << " " << rect.r << " "
+			              << rect.t << " " << rect.b;
+		#endif
 	}
 
 

@@ -15,6 +15,7 @@
  *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#define GNUPLOT // I am testing this w/ gnuplot, so it should be in that format
 
 #include <iostream>
 #include <fstream>
@@ -53,21 +54,14 @@ int main( int argc, char *argv[] ) {
 	    << "set yrange [" << min << ":" << max+1 << "]\n"
 	    << "unset mouse\nset size square\n"
 	// seed in title to recreate results
-	    << "set title 'seed = " << seed << "' font 'Arial,12'\n"
-	// the different styles
-	    << "set style line 1 pointtype 7 linecolor rgb 'black'\n"
-	    << "set style line 2 pointtype 7 linecolor rgb 'red'\n"
-	    << "set style line 3 pointtype 7 linecolor rgb 'green'\n"
-	// change depending on if you want lines or points
-	    << "plot '-' ls 1 with linespoints notitle, '-' ls 2 with linespoints notitle, '-' ls 3 with linespoints notitle\n";
+	    << "set title 'seed = " << seed << "' font 'Arial,12'\n";
 
 	
-	// ROTATE / MIRROR SETUP
+	// ROTATE / MIRROR SETUP  (point,line,angle)
 	point2f about { generator( ), generator( ) };
 	line2f over { about, point2f{ generator( ), generator( ) } };
 //	float ang = generator( ) * 10.f;
-
-	// POLYGON SETUP
+	// POLYGON SETUP  (2 random polys)
 	int num_points = 10;
 	polygon2f poly1;
 	for( int i = 0; i < num_points; i++ ) {
@@ -79,59 +73,89 @@ int main( int argc, char *argv[] ) {
 		point2f pt { generator( ), generator( ) };
 		poly2.add_points( pt );
 	}
-	
-	// RECT SETUP
+	// RECT SETUP  (2 random rects)
 	rect2f rect1 { point2f{ generator( )/2, generator( )/2 }, generator( )/2, generator( )/2 };	
 	rect2f rect2 { point2f{ generator( )/2, generator( )/2 }, generator( )/2, generator( )/2 };	
-	
-	// LINE SETUP
+	// LINE SETUP  (2 random lines)
 	line2f line1 { generator( ), generator( ), generator( ), generator( ) };
 	line2f line2 { generator( ), generator( ), generator( ), generator( ) };
-	
-	int test_num = 1;
+
+
+	int test_num = 2;
+
 
 	// TEST 1 POLYGON-POINT INTERSECT
 	if( test_num == 1 ) {
 		point2f loc = overlap( about, poly1 );
-		loc.print( cout, true );
-		
-		about.gnuplot( out ); out << "e\n";
-		poly1.bounding_box( ).gnuplot( out );
-		poly1.gnuplot( out );
+		std::cout << "Intersection at " << loc;
+
+		out << "set style line 1 pointtype 7 linecolor rgb 'black'\n"
+		    << "set style line 2 pointtype 7 linecolor rgb 'red'\n"
+		    << "set style line 3 pointtype 7 linecolor rgb 'green'\n"
+		    << "plot '-' ls 1 with points notitle, "
+		    <<      "'-' ls 2 with linespoints notitle, "
+		    <<      "'-' ls 3 with linespoints notitle\n";
+
+		out << about << "e\n";
+		out << poly1.bounding_box( );
+		out << poly1;
 	}
 	
 	// TEST 2 LINE-LINE INTERSECT
 	if( test_num == 2 ) {
 		point2f loc = overlap( line1, line2 );
-		loc.print( cout, true );
+		std::cout << "Intersection at " << loc;
+
+		out << "set style line 1 pointtype 7 linecolor rgb 'black'\n"
+		    << "set style line 2 pointtype 7 linecolor rgb 'red'\n"
+		    << "set style line 3 pointtype 7 linecolor rgb 'green'\n"
+		    << "f" << line1
+		    << "g" << line2
+		    << "plot f(x) ls 3 with lines notitle, "
+		    <<      "g(x) ls 2 with lines notitle, "
+		    <<      "'-' ls 1 with linespoints notitle\n";
 		
-		loc.gnuplot( out ); out << "e\n";
-		line1.gnuplot( out );
-		line2.gnuplot( out );
+		out << loc << "e\n";
 	}
 	
 	// TEST 3 LINE-RECT INTERSECT
 	if( test_num == 3 ) {
 		line2f loc = overlap( line1, rect1 );
-		loc.print( cout, true );
-		
-		loc.gnuplot(out  );
-		line1.gnuplot( out );
-		rect1.gnuplot( out );
+		std::cout << "Intersection at f" << loc;
+
+		out << "set style line 1 pointtype 7 linecolor rgb 'black'\n"
+		    << "set style line 2 pointtype 7 linecolor rgb 'red'\n"
+		    << "set style line 3 pointtype 7 linecolor rgb 'green'\n"
+		    << "f" << loc
+		    << "g" << line1
+		    << "plot f(x) ls 1 with lines notitle, "
+		    <<      "g(x) ls 2 with lines notitle, "
+		    <<      "'-' ls 3 with linespoints notitle\n";
+
+		out << loc;
+		out << line1;
+		out << rect1;
 	}
 	
 	// TEST 4 LINE-POLYGON INTERSECT
 	if( test_num == 4 ) {
 		line2f loc = overlap( line1, poly1 );
-		loc.print( cout, true );
-		
-		loc.gnuplot( out );
-		poly1.bounding_box( ).gnuplot( out );
-		poly1.gnuplot( out );
+		std::cout << "Intersection at f" << loc;
+
+		out << "set style line 1 pointtype 7 linecolor rgb 'black'\n"
+		    << "set style line 2 pointtype 7 linecolor rgb 'red'\n"
+		    << "set style line 3 pointtype 7 linecolor rgb 'green'\n"
+		    << loc
+		    << "plot f(x) ls 1 with lines notitle, "
+		    <<      "'-' ls 2 with linespoints notitle, "
+		    <<      "'-' ls 3 with linespoints notitle\n";
+
+		out << poly1.bounding_box( );
+		out << poly1;
 	}
 
 	// finish up the gnuplot output
-	out << "pause -1 'Press enter to exit'\n";
+	out << "pause -1 'press enter to continue'\n";
 	out.close( );
 
 	return 0;
