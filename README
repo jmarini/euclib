@@ -1,0 +1,34 @@
+euclib by Jonathan Marini
+
+j.marini (at) ieee (dot) org
+
+
+license:
+	This project is licensed under the GPL, which is located in the file
+	"LICENSE".
+
+about:
+	Generic 2D geometry library providing points, lines, polygons, and many
+	helper functions including (when it's done) transformations, combinations,
+	and intersections.
+	
+note on compilation:
+	This project is partially an exploration of the new C++0X language features
+	by myself, and thus this project extensively uses C++0X constructs and
+	language features, most notably:
+		rvalue references
+		variadic templates
+		static_cast
+		intializer lists
+		auto
+	if you do not use the included makefile, make sure you are using at least
+	gcc 4.5 with the -std=c++0x flag or a compiler that will support these
+	features.  Additionally, I will most likely be including at least some
+	boost dependencies in the future, so having the boost libraries will
+	soon become a requirement.
+
+usage:
+	Since this is a generic library, it will most likely need only header file
+	includes to integrate properly.  The header file "euclib.hpp" includes all
+	of the other files needed, or you can include them individually as needed.
+
