@@ -1,4 +1,4 @@
-/*	point.hpp  v 0.1.3.10.1117
+/*	point.hpp  v 0.1.4.10.1117
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -30,16 +30,22 @@ class point2 {
 // Tyepdefs
 protected:
 
-	typedef std::numeric_limits<T> lim;
+	typedef std::numeric_limits<T> limit_t;
+	
 
-	// This class can only be used with numeric types
-	static_assert( lim::is_specialized,
+	// This class can only be used with scalar types
+	//   or types with a specific specialization
+	static_assert( limit_t::is_specialized,
 	               "type not compatible with std::numeric_limits" );
 
 // Variables
 public:
 
 	T x, y;
+	
+private:
+
+	static T invalid; // holds either limit_t::infinity or limit_t::max
 
 
 // Constructors
@@ -57,12 +63,8 @@ public:
 	// Returns a null point, defined as ( inf, inf ) or ( max, max )
 	//   depending on what type T is.
 	static point2<T> null( ) {
-		if( lim::has_infinity ) {
-			return point2<T>( lim::infinity( ), lim::infinity( ) );
-		}
-		else {
-			return point2<T>( lim::max( ), lim::max( ) );
-		}
+		static point2<T> null = point2<T>{ invalid, invalid };
+		return null;
 	}
 
 	// TODO: maybe make this a little easier to use
@@ -80,23 +82,13 @@ public:
 private:
 
 	void check_valid( ) {
-		if( lim::has_infinity &&
-		    ( x == lim::infinity( ) || y == lim::infinity( ) )
-		  ) {
-			set_null( );
-		}
-		else if( x == lim::max( ) || y == lim::max( ) ) {
+		if( x == invalid || y == invalid ) {
 			set_null( );
 		}
 	}
 	
 	void set_null( ) {
-		if( lim::has_infinity ) {
-			x = y = lim::infinity( );
-		}
-		else {
-			x = y = lim::max( );
-		}
+		x = y = invalid;
 	}
 
 
@@ -123,16 +115,9 @@ public:
 		if( pt.x == x && pt.y == y ) { return true; }
 
 		// checking for null equality
-		// a point counts as null if x or y has the value infinity/max
-		if( lim::has_infinity &&
-		    ( pt.x == lim::infinity( ) || pt.y == lim::infinity( ) ) &&
-		    ( x == lim::infinity( ) || y == lim::infinity( ) )
+		if( ( pt.x == invalid || pt.y == invalid ) &&
+		    (    x == invalid ||    y == invalid )
 		  ) {
-			return true;
-		}
-		else if( ( pt.x == lim::max( ) || pt.y == lim::max( ) ) &&
-		         ( x == lim::max( ) || y == lim::max( ) )
-		       ) {
 			return true;
 		}
 		
@@ -149,6 +134,14 @@ public:
 typedef point2<int>           point2i;
 typedef point2<float>         point2f;
 typedef point2<unsigned int>  point2u;
+
+// Initialize invalid with either infinity or max
+template<typename T>
+T point2<T>::invalid = ( point2<T>::limit_t::has_infinity ?
+                             point2<T>::limit_t::infinity( )
+                         : // else
+                             point2<T>::limit_t::max( )
+                       );
 
 }  // End namespace euclib
 

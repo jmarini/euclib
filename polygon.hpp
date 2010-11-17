@@ -1,4 +1,4 @@
-/*	polygon.hpp  v 0.0.9.10.1117
+/*	polygon.hpp  v 0.1.0.10.1117
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -36,10 +36,11 @@ class polygon2 {
 // Typedefs
 protected:
 
-	typedef std::numeric_limits<T> lim;
+	typedef std::numeric_limits<T> limit_t;
 
-	// This class can only be used with numeric types
-	static_assert( lim::is_specialized,
+	// This class can only be used with scalar types
+	//   or types with a specific specialization
+	static_assert( limit_t::is_specialized,
 	               "type not compatible with std::numeric_limits" );
 
 // Friend functions
@@ -61,6 +62,8 @@ private:
 
 	std::vector<point2<T>>  m_hull;
 	rect2<T>                m_bounding_box;
+
+	static T invalid; // holds either limit_t::infinity or limit_t::max
 
 
 // Constructors
@@ -94,9 +97,8 @@ public:
 	// TODO: this is probably a good null, think about it though
 	// Returns a null polygon, defined as having a null bounding box
 	static polygon2<T> null( ) {
-		polygon2<T> tmp;
-		tmp.m_bounding_box = rect2<T>::null( );
-		return tmp;
+		static polygon2<T> null = polygon2<T>( );
+		return null;
 	}
 
 	// TODO: I don't like these being hardcoded to floats...
@@ -188,11 +190,11 @@ private:
 		// find the right/bottommost point
 		auto best = m_hull.begin( );
 		for( auto itr = m_hull.begin( ); itr != m_hull.end( ); ++itr ) {
-			if( best->y - itr->y > lim::epsilon( ) ) {
+			if( best->y - itr->y > limit_t::epsilon( ) ) {
 				best = itr;
 			}
-			else if( std::abs(itr->y - best->y) <= lim::epsilon( ) &&
-			         best->x - itr->x > lim::epsilon( ) ) {
+			else if( std::abs(itr->y - best->y) <= limit_t::epsilon( ) &&
+			         best->x - itr->x > limit_t::epsilon( ) ) {
 				best = itr;
 			}
 			
@@ -207,10 +209,10 @@ private:
 				float angle1 = atan2( l.y - tmp.y, l.x - tmp.x );
 				float angle2 = atan2( r.y - tmp.y, r.x - tmp.x );
 				if( std::abs(angle1 - angle2) <= std::numeric_limits<float>::epsilon( ) ) {
-					if( std::abs(l.x-r.x) <= lim::epsilon( ) ) {
-						return (bool)(r.y - l.y > lim::epsilon( ) );
+					if( std::abs(l.x-r.x) <= limit_t::epsilon( ) ) {
+						return (bool)(r.y - l.y > limit_t::epsilon( ) );
 					}
-					return (bool)(r.x - l.x > lim::epsilon( ) );
+					return (bool)(r.x - l.x > limit_t::epsilon( ) );
 				}
 				return ( angle2 - angle1 > std::numeric_limits<float>::epsilon( ) );
 			}
@@ -226,10 +228,10 @@ private:
 			else {
 				// only left turns allowed
 				T dir = direction( *(stack.rbegin()+1), *stack.rbegin(), *itr );
-				if( dir > lim::epsilon( ) ) {
+				if( dir > limit_t::epsilon( ) ) {
 					stack.push_back( *itr );
 				}
-				else if( std::abs(dir) <= lim::epsilon( ) ) {
+				else if( std::abs(dir) <= limit_t::epsilon( ) ) {
 					float d1 = line2<T>( *(stack.rbegin( )+1), *itr ).length( );
 					float d2 = line2<T>( *(stack.rbegin( )+1), *stack.rbegin( ) ).length( );
 					if( d1 - d2 > std::numeric_limits<float>::epsilon( ) ) {
@@ -256,18 +258,18 @@ private:
 		T b = itr->y;
 		for( ++itr ; itr != m_hull.end( ); ++itr ) {
 			// x
-			if( l - itr->x > lim::epsilon( ) ) {
+			if( l - itr->x > limit_t::epsilon( ) ) {
 				l = itr->x;
 			}
-			else if( itr->x - r > lim::epsilon( ) ) {
+			else if( itr->x - r > limit_t::epsilon( ) ) {
 				r = itr->x;
 			}
 			
 			// y
-			if( t - itr->y > lim::epsilon( ) ) {
+			if( t - itr->y > limit_t::epsilon( ) ) {
 				t = itr->y;
 			}
-			else if( itr->y - b > lim::epsilon( ) ) {
+			else if( itr->y - b > limit_t::epsilon( ) ) {
 				b = itr->y;
 			}
 		}
@@ -335,6 +337,14 @@ public:
 typedef polygon2<int>           polygon2i;
 typedef polygon2<float>         polygon2f;
 typedef polygon2<unsigned int>  polygon2u;
+
+// Initialize invalid with either infinity or max
+template<typename T>
+T polygon2<T>::invalid = ( polygon2<T>::limit_t::has_infinity ?
+                               polygon2<T>::limit_t::infinity( )
+                           : // else
+                               polygon2<T>::limit_t::max( )
+                         );
 
 }  // End namespace euclib
 

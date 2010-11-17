@@ -1,4 +1,4 @@
-/*	line.hpp  v 0.1.2.10.1117
+/*	line.hpp  v 0.1.3.10.1117
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -26,6 +26,7 @@
 #include "point.hpp"
 
 // TODO: this is segment, make another line class?
+//       could need significant changes
 
 namespace euclib {
 
@@ -35,10 +36,11 @@ class line2 {
 // Typdefs
 protected:
 
-	typedef std::numeric_limits<T> lim;
+	typedef std::numeric_limits<T> limit_t;
 
-	// This class can only be used with numeric types
-	static_assert( lim::is_specialized,
+	// This class can only be used with scalar types
+	//   or types with a specific specialization
+	static_assert( limit_t::is_specialized,
 	               "type not compatible with std::numeric_limits" );
 
 // Variables
@@ -46,6 +48,10 @@ public:
 
 	point2<T> pt1;
 	point2<T> pt2;
+
+private:
+
+	static T invalid; // holds either limit_t::infinity or limit_t::max
 
 
 // Constructors
@@ -75,16 +81,11 @@ public:
 // Methods
 public:
 
-	// Returns a null line, defined as point2<T>::null->point2<T>::null
+	// Returns a null line, defined as point2<T>::null --> point2<T>::null
 	static line2<T> null( ) {
-		if( lim::has_infinity ) {
-			return line2<T>( lim::infinity( ), lim::infinity( ),
-			                 lim::infinity( ), lim::infinity( ) );
-		}
-		else {
-			return line2<T>( lim::max( ), lim::max( ),
-			                 lim::max( ), lim::max( ) );
-		}
+		static line2<T> null = line2<T>{ point2<T>::null( ),
+		                                 point2<T>::null( ) };
+		return null;
 	}
 
 	T width( )  const { return std::abs( pt1.x - pt2.x ); }
@@ -93,7 +94,7 @@ public:
 	// TODO: I don't like forcing these to float...
 
 	float slope( ) const {
-		if( std::abs( pt1.x - pt2.x ) <= lim::epsilon( ) ) { // same x coordinate
+		if( std::abs( pt1.x - pt2.x ) <= limit_t::epsilon( ) ) { // same x coordinate
 			return std::numeric_limits<float>::infinity( );
 		}
 		
@@ -212,29 +213,20 @@ public:
 private:
 
 	void check_valid( ) {
-		// check inf
-		if( lim::has_infinity &&
-		    ( pt1.x == lim::infinity( ) || pt1.y == lim::infinity( ) ||
-			  pt2.x == lim::infinity( ) || pt2.y == lim::infinity( ) )
-		  ) {
+		// check null
+		if( pt1 == point2<T>::null( ) || pt2 == point2<T>::null( ) ) {
 			set_null( );
 		}
-		// check max
-		else if( pt1.x == lim::max( ) || pt1.y == lim::max( ) ||
-		         pt2.x == lim::max( ) || pt2.y == lim::max( )
-		       ) {
-				set_null( );
-		}
 		// check if pts are equal
-		else if( std::abs(pt1.x - pt2.x) <= lim::epsilon( ) &&
-		         std::abs(pt1.y - pt2.y) <= lim::epsilon( )
+		else if( std::abs(pt1.x - pt2.x) <= limit_t::epsilon( ) &&
+		         std::abs(pt1.y - pt2.y) <= limit_t::epsilon( )
 		       ) {
 				set_null( );
 		}
 	}
 	
 	void set_null( ) {
-		pt1 = pt2 = { };
+		pt1 = pt2 = point2<T>::null( );
 	}
 
 
@@ -272,6 +264,14 @@ public:
 typedef line2<int>           line2i;
 typedef line2<float>         line2f;
 typedef line2<unsigned int>  line2u;
+
+// Initialize invalid with either infinity or max
+template<typename T>
+T line2<T>::invalid = ( line2<T>::limit_t::has_infinity ?
+                            line2<T>::limit_t::infinity( )
+                        : // else
+                            line2<T>::limit_t::max( )
+                      );
 
 }  // End namespace euclib
 

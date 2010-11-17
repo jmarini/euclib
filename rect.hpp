@@ -1,4 +1,4 @@
-/*	rect.hpp  v 0.1.1.10.1117
+/*	rect.hpp  v 0.1.2.10.1117
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -32,16 +32,21 @@ class rect2 {
 // Typedefs
 protected:
 
-	typedef std::numeric_limits<T> lim;
+	typedef std::numeric_limits<T> limit_t;
 
-	// This class can only be used with numeric types
-	static_assert( lim::is_specialized,
+	// This class can only be used with scalar types
+	//   or types with a specific specialization
+	static_assert( limit_t::is_specialized,
 	               "type not compatible with std::numeric_limits" );
 
 // Variables
 public:
 
 	T l, r, t, b;
+
+private:
+
+	static T invalid; // holds either limit_t::infinity or limit_t::max
 
 
 // Constructors
@@ -71,15 +76,8 @@ public:
 
 	// Returns a null rect, defined as inf/max for all
 	static rect2<T> null( ) {
-		if( lim::has_infinity ) {
-			return rect2<T>( lim::infinity( ), lim::infinity( ),
-			                 lim::infinity( ), lim::infinity( ) );
-		}
-		else {
-			return rect2<T>( lim::max( ), lim::max( ),
-			                 lim::max( ), lim::max( ) );
-		}
-		
+		static rect2<T> null = rect2<T>{ invalid, invalid, invalid, invalid };
+		return null;
 	}
 
 	T  width( )  const { return r - l; }
@@ -116,32 +114,20 @@ public:
 private:
 
 	void check_valid( ) {
-		// check inf
-		if( lim::has_infinity &&
-		    ( l == lim::infinity( ) || r == lim::infinity( ) ||
-			  t == lim::infinity( ) || b == lim::infinity( ) )
+		// check null
+		if( l == invalid || r == invalid ||
+		    t == invalid || b == invalid
 		  ) {
 			set_null( );
 		}
-		// check max
-		else if( l == lim::max( ) || r == lim::max( ) ||
-		         t == lim::max( ) || b == lim::max( )
-		       ) {
-			set_null( );				
-		}
 		// is l > r or t > b
-		else if( l - r >= lim::epsilon( ) || t - b >= lim::epsilon( ) ) {
+		else if( l - r >= limit_t::epsilon( ) || t - b >= limit_t::epsilon( ) ) {
 			set_null( );
 		}
 	}
 	
 	void set_null( ) {
-		if( lim::has_infinity ) {
-			l = r = t = b = lim::infinity( );
-		}
-		else {
-			l = r = t = b = lim::max( );
-		}
+		l = r = t = b = invalid;
 	}
 
 // Operators
@@ -165,36 +151,26 @@ public:
 		check_valid( );
 		return *this;
 	}
-	
-	// TODO: wow this is ugly...
+
 	bool operator == ( const rect2<T>& rect ) const {
 		if( l == rect.l && r == rect.r && t == rect.t && b == rect.b ) {
 			return true;
 		}
 		
 		// checking for null equality
-		// a rect is null is any value is inf/max or if l > r or t > b
-		// check inf
-		if( lim::has_infinity &&
-		    ( ( l == lim::infinity( ) || r == lim::infinity( ) ||
-		        t == lim::infinity( ) || b == lim::infinity( ) ) ||
-		      ( l - r >= lim::epsilon( ) || t - b >= lim::epsilon( ) ) ) &&
-		    ( ( rect.l == lim::infinity( ) || rect.r == lim::infinity( ) ||
-		        rect.t == lim::infinity( ) || rect.b == lim::infinity( ) ) ||
-		      ( rect.l - rect.r >= lim::epsilon( ) ||
-		        rect.t - rect.b >= lim::epsilon( ) ) )
-		  ) {
-		  	return true;
+		// a rect is null if any value is inf/max or if l > r or t > b
+		if( ( l == invalid || r == invalid ||
+		      t == invalid || b == invalid ) &&
+		    ( rect.l == invalid || rect.r == invalid ||
+		      rect.t == invalid || rect.b == invalid )
+		   ) {
+		   	return true;
 		}
-		// check max
-		else if(
-		    ( ( l == lim::max( ) || r == lim::max( ) ||
-		        t == lim::max( ) || b == lim::max( ) ) ||
-		      ( l - r >= lim::epsilon( ) || t - b >= lim::epsilon( ) ) ) &&
-		    ( ( rect.l == lim::max( ) || rect.r == lim::max( ) ||
-		        rect.t == lim::max( ) || rect.b == lim::max( ) ) ||
-		      ( rect.l - rect.r >= lim::epsilon( ) ||
-		        rect.t - rect.b >= lim::epsilon( ) ) )
+		// check l > r or t < b
+		else if( ( l - r >= limit_t::epsilon( ) ||
+		           t - b >= limit_t::epsilon( ) ) &&
+		         ( rect.l - rect.r >= limit_t::epsilon( ) ||
+		           rect.t - rect.b >= limit_t::epsilon( ) )
 		       ) {
 			return true;
 		}
@@ -212,6 +188,14 @@ public:
 typedef rect2<int>           rect2i;
 typedef rect2<float>         rect2f;
 typedef rect2<unsigned int>  rect2u;
+
+// Initialize invalid with either infinity or max
+template<typename T>
+T rect2<T>::invalid = ( rect2<T>::limit_t::has_infinity ?
+                            rect2<T>::limit_t::infinity( )
+                        : // else
+                            rect2<T>::limit_t::max( )
+                      );
 
 }  // End namespace euclib
 
