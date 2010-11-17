@@ -30,7 +30,6 @@
 
 namespace euclib {
 
-
 template<typename T>
 class line2 {
 // Typdefs
@@ -61,18 +60,24 @@ public:
 	line2( const line2<T>& line ) { *this = line; }
 	line2( line2<T>&& line ) { *this = std::move( line ); }
 	line2( const point2<T>& p1, const point2<T>& p2 ) {
-		if ( p1.x <= p2.x ) { pt1 = p1; pt2 = p2; }
-		else { pt1 = p2; pt2 = p1; }
+		if( less_equal( p1.x, p2.x ) ) {
+			pt1 = p1;
+			pt2 = p2;
+		}
+		else {
+			pt1 = p2;
+			pt2 = p1;
+		}
 		check_valid( );
 	}
 	line2( T x1, T y1, T x2, T y2 ) {
-		if ( x1 <= x2 ) {
-			pt1 = point2<T>( x1, y1 );
-			pt2 = point2<T>( x2, y2 );
+		if( less_equal( x1, x2) ) {
+			pt1 = point2<T>{ x1, y1 };
+			pt2 = point2<T>{ x2, y2 };
 		}
 		else {
-			pt1 = point2<T>( x2, y2 );
-			pt2 = point2<T>( x1, y1 );
+			pt1 = point2<T>{ x2, y2 };
+			pt2 = point2<T>{ x1, y1 };
 		}
 		check_valid( );
 	}
@@ -113,50 +118,51 @@ public:
 	}
 
 
-	// TODO: What to do about the inter/extrapolate functions...
+	// TODO: What to do about the inter/extrapolate functions
+	//       they are cluttered, an may not have a use in a segment class
 
 	// Extrapolate beyond the bounds of the line segment.
 	// Distance: the length beyond the line to move, sign determines direction.
 	point2<T> extrapolate( float distance ) {
 		T delX = sqrt( ( distance * distance ) / ( 1 + slope( ) * slope( ) ) );
 		T delY = slope( ) * delX;
-		if ( distance < 0 ) {
-			return point2<T>( pt1.x - delX, pt1.y - delY );
+		if ( less_than( distance, 0.f ) ) {
+			return point2<T>{ pt1.x - delX, pt1.y - delY };
 		}
 		else {
-			return point2<T>( pt2.x + delX, pt2.y + delY );
+			return point2<T>{ pt2.x + delX, pt2.y + delY };
 		}
 	}
 
 	// value: value(on axis) beyond the line to move, sign determines direction.
 	point2<T> extrapolateX( T value ) {
-		if ( value == 0 ) { return pt1; }
+		if ( equal( value, 0 ) ) { return pt1; }
 		T delX = value;
 		T delY = slope( ) * delX;
-		if ( value < 0 ) {
-			return point2<T>( pt1.x + delX, pt1.y + delY );
+		if ( less_than( value, 0 ) ) {
+			return point2<T>{ pt1.x + delX, pt1.y + delY };
 		}
 		else {
-			return point2<T>( pt2.x + delX, pt2.y + delY );
+			return point2<T>{ pt2.x + delX, pt2.y + delY };
 		}
 	}
 	
 	point2<T> extrapolateY( T value ) {
-		if ( value == 0 ) { return pt1; }
+		if ( equal( value, 0 ) ) { return pt1; }
 		T delY = value;
 		T delX = delY / slope( );
-		if ( value > 0 ) {
-			return point2<T>( pt1.x + delX, pt1.y + delY );		
+		if ( less_than( value, 0 ) ) {
+			return point2<T>{ pt1.x + delX, pt1.y + delY };		
 		}
 		else { // value < 0
-			return point2<T>( pt2.x + delX, pt2.y + delY );
+			return point2<T>{ pt2.x + delX, pt2.y + delY };
 		}
 	}
 
 	// Interpolate between the bounds of the line segment.
 	// Distance: the length along the line to move, sign determines direction.
 	point2<T> interpolate( float distance ) {
-		if ( ( distance > 0 ? distance : -distance ) >= length( ) ) {
+		if ( ( greater_than( distance, 0.f ) ? distance : -distance ) >= length( ) ) {
 			return ( distance > 0 ? pt2 : pt1 );
 		}
 		T delX = sqrt( ( distance * distance ) / ( 1 + slope( ) * slope( ) ) );
@@ -213,15 +219,11 @@ public:
 private:
 
 	void check_valid( ) {
-		// check null
 		if( pt1 == point2<T>::null( ) || pt2 == point2<T>::null( ) ) {
 			set_null( );
 		}
-		// check if pts are equal
-		else if( std::abs(pt1.x - pt2.x) <= limit_t::epsilon( ) &&
-		         std::abs(pt1.y - pt2.y) <= limit_t::epsilon( )
-		       ) {
-				set_null( );
+		else if( pt1 == pt2 ) {
+			set_null( );
 		}
 	}
 	

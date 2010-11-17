@@ -1,4 +1,4 @@
-/*	point.hpp  v 0.1.4.10.1117
+/*	point.hpp  v 0.1.5.10.1117
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -22,8 +22,42 @@
 
 #include <ostream>
 #include <limits>
+#include <complex>
 
 namespace euclib {
+
+	// Helper functions for comparisons, because no assumptions
+	//   can be made about the exactness of type T
+
+	template<typename T>
+	bool equal( T lhs, T rhs ) {
+		return std::abs( lhs - rhs ) <= std::numeric_limits<T>::epsilon( );
+	}
+
+	template<typename T>
+	bool not_equal( T lhs, T rhs ) {
+		return !(lhs == rhs);
+	}
+
+	template<typename T>
+	bool less_than( T lhs, T rhs ) {
+		return rhs - lhs > std::numeric_limits<T>::epsilon( );
+	}
+
+	template<typename T>
+	bool less_equal( T lhs, T rhs ) {
+		return (lhs < rhs || lhs == rhs);
+	}
+
+	template<typename T>
+	bool greater_than( T lhs, T rhs ) {
+		return lhs - rhs > std::numeric_limits<T>::epsilon( );
+	}
+
+	template<typename T>
+	bool greater_equal( T lhs, T rhs ) {
+		return (lhs > rhs || lhs == rhs);
+	}
 
 template<typename T>
 class point2 {
@@ -31,7 +65,6 @@ class point2 {
 protected:
 
 	typedef std::numeric_limits<T> limit_t;
-	
 
 	// This class can only be used with scalar types
 	//   or types with a specific specialization
@@ -112,7 +145,11 @@ public:
 	}
 
 	bool operator == ( const point2<T>& pt ) const {
-		if( pt.x == x && pt.y == y ) { return true; }
+		if( equal( pt.x, x ) &&
+		    equal( pt.y, y )
+		  ) {
+		  return true;
+		}
 
 		// checking for null equality
 		if( ( pt.x == invalid || pt.y == invalid ) &&
