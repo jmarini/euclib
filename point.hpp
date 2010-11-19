@@ -1,4 +1,4 @@
-/*	point.hpp  v 0.1.6.10.1117
+/*	point.hpp  v 0.1.6.10.1118
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -31,33 +31,33 @@ namespace euclib {
 	// TODO: move into own header file
 
 	template<typename T>
-	bool equal( T lhs, T rhs ) {
+	inline bool equal( T lhs, T rhs ) {
 		return lhs == rhs ||
 		       std::abs( lhs - rhs ) <= std::numeric_limits<T>::epsilon( );
 	}
 
 	template<typename T>
-	bool not_equal( T lhs, T rhs ) {
+	inline bool not_equal( T lhs, T rhs ) {
 		return !(lhs == rhs);
 	}
 
 	template<typename T>
-	bool less_than( T lhs, T rhs ) {
+	inline bool less_than( T lhs, T rhs ) {
 		return rhs - lhs > std::numeric_limits<T>::epsilon( );
 	}
 
 	template<typename T>
-	bool less_equal( T lhs, T rhs ) {
+	inline bool less_equal( T lhs, T rhs ) {
 		return (lhs < rhs || lhs == rhs);
 	}
 
 	template<typename T>
-	bool greater_than( T lhs, T rhs ) {
+	inline bool greater_than( T lhs, T rhs ) {
 		return lhs - rhs > std::numeric_limits<T>::epsilon( );
 	}
 
 	template<typename T>
-	bool greater_equal( T lhs, T rhs ) {
+	inline bool greater_equal( T lhs, T rhs ) {
 		return (lhs > rhs || lhs == rhs);
 	}
 

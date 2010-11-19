@@ -1,4 +1,4 @@
-/*	polygon.hpp  v 0.1.1.10.1117
+/*	polygon.hpp  v 0.1.2.10.1118
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -101,10 +101,9 @@ public:
 		return null;
 	}
 
-	// TODO: I don't like these being hardcoded to floats...
+	T width( ) const  { return m_bounding_box.width( ); }
+	T height( ) const { return m_bounding_box.height( ); }
 
-	float width( ) const { return m_bounding_box.width( ); }
-	float height( ) const { return m_bounding_box.height( ); }
 	// TODO: look at algorithm from ../polygon.cpp
 	float area( ) const {
 		std::cerr << "Error: polygon<T>::area( ) not implemented.\n";
@@ -122,6 +121,7 @@ public:
 		}
 		return perim;
 	}
+
 	rect2<T> bounding_box( ) const { return m_bounding_box; }
 	unsigned int size( ) const { return m_hull.size( ); }
 	
@@ -140,33 +140,18 @@ public:
 		}
 		add_points( std::forward<Points>( points )... );
 	}
-	
+
+	// TODO: should not just call variadic version to avoid calls to
+	//       graham_hull at every point
 	void add_points( const std::vector<point2<T>>& points ) {
 		m_hull.reserve( points.size( ) );
 		for( auto itr = points.begin( ); itr != points.end( ); ++itr ) {
 			add_points( *itr );
 		}
 	}
-	
+
 	point2<T> operator [] ( int index ) const {
 		return m_hull.at( index );
-	}
-
-	void print( std::ostream& stream, bool newline = false ) const {
-		stream << "Polygon: size = " << m_hull.size( ) << "\n  ";
-		for( unsigned int i = 0; i < m_hull.size( ); ++i ) {
-			stream << ( i != 0 ? "->" : "" );
-			m_hull[i].print( stream, false );
-		}
-		if( newline ) { stream << "\n"; }
-	}
-	
-	void gnuplot( std::ostream& stream ) const {
-		for( unsigned int i = 0; i < m_hull.size( ); ++i ) {
-			stream << m_hull[i];
-		}
-		stream << m_hull[0];
-		stream << "e\n";
 	}
 
 private:
@@ -180,6 +165,9 @@ private:
 		return ( (pt1.x-pt0.x)*(pt2.y-pt0.y) - (pt1.y-pt0.y)*(pt2.x-pt0.x) );
 	}
 
+	// TODO: can probably implement the algorithm a little better
+	//       also segfaults (sometimes) on large (>1000) datasets
+	//       and all(?) the time on very large (>10000) datasets
 	void graham_hull( ) {
 		if( m_hull.size( ) < 3 ) { return; }
 		
@@ -301,8 +289,16 @@ public:
 	bool operator == ( const polygon2<T>& poly ) const {
 		// quick test for failure
 		if( m_bounding_box != poly.m_bounding_box ) { return false; }
-		// test for null
-		else if( m_bounding_box == rect2<T>::null( ) ) { return true; }
+		// test for both null
+		else if( m_bounding_box == rect2<T>::null( ) &&
+		         poly.m_bounding_box == rect2<T>::null( ) ) {
+			return true;
+		}
+		// test for one null
+		else if( m_bounding_box == rect2<T>::null( ) &&
+		         poly.m_bounding_box == rect2<T>::null( ) ) {
+			return false;
+		}
 		// test size of hull
 		else if( m_hull.size( ) != poly.m_hull.size( ) ) { return false; }
 		// test every point
@@ -326,7 +322,7 @@ public:
 	}
 	
 	polygon2<T>& operator = ( polygon2<T>&& poly ) {
-		m_bounding_box = poly.m_bounding_box;
+		std::swap( m_bounding_box, poly.m_bounding_box );
 		std::swap( m_hull, poly.m_hull );
 		return *this;
 	}
