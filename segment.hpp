@@ -1,4 +1,4 @@
-/*	line.hpp  v 0.1.1.10.1117
+/*	line.hpp  v 0.1.1.10.1122
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -95,8 +95,8 @@ public:
 		return null;
 	}
 
-	T width( )  const { return std::abs( pt1.x - pt2.x ); }
-	T height( ) const { return std::abs( pt1.y - pt2.y ); }
+	inline T width( )  const { return std::abs( pt1.x - pt2.x ); }
+	inline T height( ) const { return std::abs( pt1.y - pt2.y ); }
 
 	float slope( ) const {
 		// same x coordinate

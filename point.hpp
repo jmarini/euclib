@@ -1,4 +1,4 @@
-/*	point.hpp  v 0.1.6.10.1118
+/*	point.hpp  v 0.1.6.10.1122
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -47,18 +47,18 @@ namespace euclib {
 	}
 
 	template<typename T>
-	inline bool less_equal( T lhs, T rhs ) {
-		return (lhs < rhs || lhs == rhs);
-	}
-
-	template<typename T>
 	inline bool greater_than( T lhs, T rhs ) {
-		return lhs - rhs > std::numeric_limits<T>::epsilon( );
+		return rhs < lhs;
+	}
+	
+	template<typename T>
+	inline bool less_equal( T lhs, T rhs ) {
+		return !(rhs < lhs);
 	}
 
 	template<typename T>
 	inline bool greater_equal( T lhs, T rhs ) {
-		return (lhs > rhs || lhs == rhs);
+		return !(lhs < rhs);
 	}
 
 template<typename T>
@@ -127,7 +127,6 @@ public:
 		return *this;
 	}
 
-	// Move assignment, takes advantage of rvalues
 	point2<T>& operator = ( point2<T>&& pt ) {
 		std::swap( x, pt.x );
 		std::swap( y, pt.y );
@@ -136,10 +135,8 @@ public:
 	}
 
 	bool operator == ( const point2<T>& pt ) const {
-		if( equal( pt.x, x ) &&
-		    equal( pt.y, y )
-		  ) {
-		  return true;
+		if( equal( pt.x, x ) && equal( pt.y, y ) ) {
+			return true;
 		}
 
 		// checking for null equality

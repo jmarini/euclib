@@ -1,4 +1,4 @@
-/*	line.hpp  v 0.1.4.10.1117
+/*	line.hpp  v 0.1.4.10.1122
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -24,7 +24,6 @@
 #include <limits>
 #include <complex>
 #include "point.hpp"
-#include "segment.hpp"
 
 namespace euclib {
 
@@ -42,12 +41,10 @@ protected:
 	               "type not compatible with std::numeric_limits" );
 
 // Variables
-public:
+private:
 
 	point2<T> pt1;
 	point2<T> pt2;
-
-private:
 
 	static T invalid; // holds either limit_t::infinity or limit_t::max
 
@@ -66,11 +63,6 @@ public:
 	line2( T x1, T y1, T x2, T y2 ) {
 		pt1 = point2<T>{ x1, y1 };
 		pt2 = point2<T>{ x2, y2 };
-		check_valid( );
-	}
-	line2( const segment2<T>& segment ) {
-		pt1 = segment.pt1;
-		pt2 = segment.pt2;
 		check_valid( );
 	}
 
@@ -105,7 +97,7 @@ public:
 		return pt1.y - static_cast<T>(tmp);
 	}
 
-	T at_x( T x ) const {
+	T at_x( T x ) const {	
 		float slp = slope( );
 		// vertical line
 		if( slp == float_limit_t::infinity( ) ) {
@@ -136,6 +128,9 @@ public:
 		if( limit_t::is_integer ) { tmp += 0.5f; } // reduce rounding errors
 		return static_cast<T>( tmp / slp );
 	}
+	
+	inline point2<T> start_pt( ) const { return pt1; }
+	inline point2<T> end_pt( ) const { return pt2; }
 
 
 private:

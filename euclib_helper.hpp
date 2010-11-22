@@ -1,4 +1,4 @@
-/*	euclib_helper.hpp  v 0.0.4.10.1117
+/*	euclib_helper.hpp  v 0.0.5.10.1122
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -34,7 +34,9 @@ using std::cout;
 
 namespace euclib {
 
-const double PI = 3.1415926536f;
+const float PI = 3.1415926536f;
+const float PI_2 = PI / 2.f;
+const float RADIANS = PI / 180.f;
 
 //TODO: angle class??
 
@@ -42,12 +44,12 @@ const double PI = 3.1415926536f;
  * Point helper functions *
  **************************/
 
-	template<typename T>
+	template<typename T> inline
 	T dot( const point2<T>& pt1, const point2<T>& pt2 ) {
 		return (pt1.x * pt2.x) + (pt1.y * pt2.y);
 	}
 
-	template<typename T>
+	template<typename T> inline
 	T cross( const point2<T>& pt1, const point2<T>& pt2 ) {
 		return (pt1.x * pt2.y) - (pt1.y * pt2.x);
 	}
@@ -57,23 +59,43 @@ const double PI = 3.1415926536f;
  * Line helper functions *
  *************************/
 
-	
+	template<typename T> inline
+	line2<T> make_line( const segment2<T>& segment ) {
+		return line2<T>{ segment.pt1, segment.pt2 };
+	}
+
+/****************************
+ * Segment helper functions *
+ ****************************/
+
+	template<typename T> inline
+	segment2<T> make_segment( const line2<T>& line, T x_left, T x_right ) {
+		return segment2<T>{ x_left, line.at_x(x_left),
+		                    x_right, line.at_x(x_right) };
+	}
 
 /*************************
  * Translation Functions *
  *************************/
 
-	template<typename T>
+	template<typename T> inline
 	point2<T> translate( const point2<T>& pt, T x, T y ) {
 		return point2<T>{ pt.x + x, pt.y + y };
 	}
-	
-	template<typename T>
+
+	template<typename T> inline
 	line2<T> translate( const line2<T>& line, T x, T y ) {
-		return line2<T>{ translate(line.pt1,x,y), translate(line.pt2,x,y) };
+		return line2<T>{ translate( line.start_pt( ), x, y ),
+		                 translate( line.end_pt( ),   x, y ) };
 	}
-	
-	template<typename T>
+
+	template<typename T> inline
+	segment2<T> translate( const segment2<T>& segment, T x, T y ) {
+		return segment2<T>( translate(segment.pt1, x, y),
+		                    translate(segment.pt2, x, y) );
+	}
+
+	template<typename T> inline
 	rect2<T> translate( const rect2<T>& rect, T x, T y ) {
 		return rect2<T>{ rect.l + x, rect.r + x, rect.t + y, rect.b + y };
 	}
@@ -82,10 +104,10 @@ const double PI = 3.1415926536f;
 	template<typename T>
 	polygon2<T> translate( const polygon2<T>& poly, T x, T y ) {
 		polygon2<T> new_poly{ poly };
-		for( auto itr = new_poly.begin( ); itr != poly.end( ); ++itr ) {
-			*itr = translate(*itr, x, y);
+		for( unsigned int i = 0; i < new_poly.m_hull.size( ); ++i ) {
+			new_poly.m_hull[i] = translate( new_poly.m_hull[i], x, y );
 		}
-		new_poly.m_bounding_box = translate( new_poly.m_bounding_box );
+		new_poly.m_bounding_box = translate( new_poly.m_bounding_box, x, y );
 		return new_poly;
 	}
 
@@ -100,41 +122,53 @@ const double PI = 3.1415926536f;
 	point2<T> rotate( const point2<T>& target, const point2<T>& about,
 	                   float angle, bool clockwise = true ) {
 	    // get translation matrix
-		float matrix[4] = { (float)cos(angle*PI/180.f), (float)-sin(angle*PI/180.f),
-		                     (float)sin(angle*PI/180.f), (float)cos(angle*PI/180.f) };
+		float matrix[4] = { std::cos(angle*RADIANS), -std::sin(angle*RADIANS),
+		                    std::sin(angle*RADIANS), std::cos(angle*RADIANS) };
 		if( !clockwise ) {
-			matrix[1] *= -1;
-			matrix[3] *= -1;
+			matrix[1] *= -1.f;
+			matrix[3] *= -1.f;
 		}
 
 		// translate 'about' to origin
 		point2<T> tmp = translate( target, -about.x, -about.y );
 
-		point2f rotated = { (matrix[0]*(float)tmp.x+matrix[1]*(float)tmp.y),
-		                    (matrix[2]*(float)tmp.x+matrix[3]*(float)tmp.y) };
-		// reduce rounding errors if T is an integer type
+		point2f rotated = { ( matrix[0]*static_cast<float>(tmp.x) +
+		                      matrix[1]*static_cast<float>(tmp.y) ),
+		                    ( matrix[2]*static_cast<float>(tmp.x) +
+		                      matrix[3]*static_cast<float>(tmp.y) ) };
+
+		// reduce rounding errors
 		if( std::numeric_limits<T>::is_integer ) {
-			rotated.x += 0.5;
-			rotated.y += 0.5;
+			rotated.x += 0.5f;
+			rotated.y += 0.5f;
 		}
 
 		// translate back
-		return translate( point2<T>{ (T)rotated.x, (T)rotated.y }, about.x, about.y );
+		return translate( point2<T>{ static_cast<T>(rotated.x),
+		                             static_cast<T>(rotated.y) },
+		                  about.x, about.y );
 	}
 
-	template<typename T>
+	template<typename T> inline
+	segment2<T> rotate( const segment2<T>& target, const point2<T>& about,
+	                    float angle, bool clockwise = true ) {
+		return segment2<T>{ rotate( target.pt1, about, angle, clockwise ),
+		                    rotate( target.pt2, about, angle, clockwise ) };
+	}
+
+	template<typename T> inline
 	line2<T> rotate( const line2<T>& target, const point2<T>& about,
 	                 float angle, bool clockwise = true ) {
-		return line2<T>{ rotate( target.pt1, about, angle, clockwise ),
-		                 rotate( target.pt2, about, angle, clockwise ) };
+		return line2<T>{ rotate( target.start_pt( ), about, angle, clockwise ),
+		                 rotate( target.end_pt( ), about, angle, clockwise ) };
 	}
 
 	template<typename T>
 	polygon2<T> rotate( const polygon2<T>& target, const point2<T>& about,
 	                    float angle, bool clockwise = true ) {
 		polygon2<T> poly { target };
-		for( auto itr = poly.m_hull.begin( ); itr != poly.m_hull.end( ); ++itr ) {
-			*itr = rotate( *itr, about, angle, clockwise );
+		for( unsigned int i = 0; i < poly.m_hull.size( ); ++i ) {
+			poly.m_hull[i] = rotate( poly.m_hull[i], about, angle, clockwise );
 		}
 		return poly;
 	}
@@ -143,7 +177,7 @@ const double PI = 3.1415926536f;
 /********************
  * Mirror Functions *
  ********************/
-
+/*
 	template<typename T>
 	point2<T> mirror( const point2<T>& target, const line2<T>& over ) {
 		// translate point & line to origin
@@ -190,7 +224,7 @@ const double PI = 3.1415926536f;
 		}
 		return poly;
 	}
-	
+*/
 
 /*********************************
  * Overlap (Intersect) Functions *
@@ -229,7 +263,7 @@ const double PI = 3.1415926536f;
 			return point2<T>::null( );
 		}
 	}
-	
+/*	
 	template<typename T>
 	point2<T> overlap( const point2<T>& pt, const line2<T>& line ) {
 		// check if either is null
@@ -254,7 +288,7 @@ const double PI = 3.1415926536f;
 			return point2<T>::null( );
 		}
 	}
-	
+*/	
 	template<typename T>
 	point2<T> overlap( const point2<T>& pt, const rect2<T>& rect ) {
 		// check if either is null
@@ -308,7 +342,7 @@ const double PI = 3.1415926536f;
 	
 	
 	// line with *
-	
+/*	
 	template<typename T>
 	point2<T> overlap( const line2<T>& line, const point2<T>& pt ) {
 		return overlap( pt, line );
@@ -425,7 +459,7 @@ const double PI = 3.1415926536f;
 		
 		return overlap( line, poly.m_bounding_box );
 	}
-
+*/
 
 /*************************
  * Combination Functions *
