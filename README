@@ -18,7 +18,7 @@ note on compilation:
 	language features, most notably:
 		rvalue references
 		variadic templates
-		static_cast
+		static_assert
 		intializer lists
 		auto
 	if you do not use the included makefile, make sure you are using at least
