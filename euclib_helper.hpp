@@ -255,13 +255,19 @@ const float RADIANS = PI / 180.f;
     | Shape One | Shape Two |  Result   |
     +===========+===========+===========+
     | Point     | Point     | Point     |
+    |           | Segment   | Point     |
     |           | Line      | Point     |
     |           | Rectangle | Point     |
     |           | Polygon   | Point     |
     +-----------+-----------+-----------+
+    | Segment   | Segment   | Point     |
+    |           | Line      | Point     |
+    |           | Rectangle | Segment   |
+    |           | Polygon   | Segment   |
+    +-----------+-----------+-----------+
     | Line      | Line      | Point     |
-    |           | Rectangle | Line      |
-    |           | Polygon   | Line      |
+    |           | Rectangle | Segment   |
+    |           | Polygon   | Segment   |
     +-----------+-----------+-----------+
     | Rectangle | Rectangle | Rectangle |
     |           | Polygon   | Polygon   |
@@ -355,139 +361,64 @@ const float RADIANS = PI / 180.f;
 
 		return pt;
 	}
-	
-	
-	// line with *
-/*	
-	template<typename T>
-	point2<T> overlap( const line2<T>& line, const point2<T>& pt ) {
-		return overlap( pt, line );
+
+
+	// segment with *
+
+	template<typename T> inline
+	point2<T> overlap( const segment2<T>& segment, const point2<T>& pt ) {
+		return overlap( pt, segment );
 	}
 
+	// TODO: not done
 	template<typename T>
-	point2<T> overlap( const line2<T>& ln1, const line2<T>& ln2 ) {
-		// check if null
-		if( ln1 == line2<T>::null( ) || ln2 == line2<T>::null( ) ) {
+	point2<T> overlap( const segment2<T>& seg1, const segment2<T>& seg2 ) {
+		if( seg1 == segment2<T>::nul( ) || seg2 == segment2<T>::null( ) ) {
 			return point2<T>::null( );
 		}
-		// check if parallel
-		else if( std::abs( ln1.slope( ) - ln2.slope( ) )
-		         <= std::numeric_limits<float>::epsilon( ) ) {
-			return point2<T>::null( );
-		}
-		// check if parallel and vertical
-		else if( ln1.intercept( ) == std::numeric_limits<float>::infinity( ) &&
-		         ln1.intercept( ) == std::numeric_limits<float>::infinity( ) ) {
-			return point2<T>::null( );
-		}
-		
-		// if ln1 is vertical
-		if( ln1.intercept( ) == std::numeric_limits<float>::infinity( ) ) {
-			float x = (float)ln1.pt1.x;
-			float y = ln2.slope( )*x + ln2.intercept( );
-			// reduce rounding errors if T is an integer type
-			if( std::numeric_limits<T>::is_integer ) {
-				x += 0.5f;
-				y += 0.5f;
-			}
-			return point2<T> { (T)x, (T)y };
-		}
-		// if ln2 is vertical
-		else if( ln2.intercept( ) == std::numeric_limits<float>::infinity( ) ) {
-			float x = (float)ln2.pt1.x;
-			float y = ln1.slope( )*x + ln1.intercept( );
-			// reduce rounding errors if T is an integer type
-			if( std::numeric_limits<T>::is_integer ) {
-				x += 0.5f;
-				y += 0.5f;
-			}
-			return point2<T>{ (T)x, (T)y };
-		}
-		
-		// general case
-		float x = (ln1.intercept( )-ln2.intercept( )) / (ln2.slope( )-ln1.slope( ));
-		float y = ln1.slope( )*x + ln1.intercept( );
-		// reduce rounding errors if T is an integer type
-		if( std::numeric_limits<T>::is_integer ) {
-			x += 0.5f;
-			y += 0.5f;
-		}
-		return point2<T>{ (T)x, (T)y };
+
+		return point2<T>::null( );
 	}
-	
-	// TODO: this seems really messy, there should be a better/cleaner algo
+
+	// TODO: not done
 	template<typename T>
-	line2<T> overlap( const line2<T>& line, const rect2<T>& rect ) {
+	point2<T> overlap( const segment2<T>& segment, const line2<T>& line ) {
 		// check null
-		if( line == line2<T>::null( ) || rect == rect2<T>::null( ) ) {
-			return line2<T>::null( );
+		if( segment == segment2<T>::null( ) || line == line2<T>::null( ) ) {
+			return point2<T>::null( );
 		}
 
-		// get intersections with each edge
-		point2<T> l = overlap( line, rect.left( ) );
-		point2<T> r = overlap( line, rect.right( ) );
-		point2<T> t = overlap( line, rect.top( ) );
-		point2<T> b = overlap( line, rect.bottom( ) );
-		bool i_l, i_r, i_t, i_b;
-		i_l = i_r = i_t = i_b = false;
-
-		// which edge does it intersect with?
-		if( l.y - rect.t > std::numeric_limits<T>::epsilon( ) &&
-		    rect.b - l.y > std::numeric_limits<T>::epsilon( ) ) {
-			i_l = true;
-		}
-		if( r.y - rect.t > std::numeric_limits<T>::epsilon( ) &&
-		    rect.b - r.y > std::numeric_limits<T>::epsilon( ) ) {
-			i_r = true;
-		}
-		if( t.x - rect.l > std::numeric_limits<T>::epsilon( ) &&
-		    rect.r - t.x > std::numeric_limits<T>::epsilon( ) ) {
-			i_t = true;
-		}
-		if( b.x - rect.l > std::numeric_limits<T>::epsilon( ) &&
-		    rect.r - b.x > std::numeric_limits<T>::epsilon( ) ) {
-			i_b = true;
-		}
-
-		// return proper line
-		if( i_l && i_r ) { return line2<T>{ l, r }; }
-		else if( i_l && i_t ) { return line2<T>{ l, t }; }
-		else if( i_l && i_b ) { return line2<T>{ l, b }; }
-		else if( i_r && i_t ) { return line2<T>{ r, t }; }
-		else if( i_r && i_b ) { return line2<T>{ r, b }; }
-		else if( i_t && i_b ) { return line2<T>{ t, b }; }
-		
-		return line2<T>::null( );
+		return point2<T>::null( );
 	}
-	
-	// TODO: only checks against bounding box right now
+
+	// TODO: not done
 	template<typename T>
-	line2<T> overlap( const line2<T>& line, const polygon2<T>& poly ) {
-		// check null
-		if( line == line2<T>::null( ) || poly == polygon2<T>::null( ) ) {
-			return line2<T>::null( );
+	segment2<T> overlap( const segment2<T>& segment, const rect2<T>& rect ) {
+		if( segment == segment2<T>::null( ) || rect == rect2<T>::null( ) ) {
+			return segment2<T>::null( );
 		}
-		
-		// check bounding box first
-		if( overlap( line, poly.m_bounding_box ) == line2<T>::null( ) ) {
-			return line2<T>::null( );
-		}
-		
-		return overlap( line, poly.m_bounding_box );
+
+		return segment2<T>::null( );
 	}
-*/
+
 
 /*************************
  * Combination Functions *
  *************************/
 /** combine ( shape1, shape2 )
- *    combines the two shapes into one shape. result will be a complex polygon.
+ *    combines the two shapes into one shape. result will be a complex polygon
+ *    except for point with point.
     +===========+===========+===========+
     | Shape One | Shape Two |  Result   |
     +===========+===========+===========+
-    | Point     | Polygon   | Polygon   |
+    | Point     | Point     | Segment   |
+    |           | Segment   | Polygon   |
+    |           | Rectagle  | Polygon   |
+    |           | Polygon   | Polygon   |
     +-----------+-----------+-----------+
-    | Line      | Polygon   | Polygon   |
+    | Segment   | Segment   | Polygon   |
+    |           | Rectangle | Polygon   |
+    |           | Polygon   | Polygon   |
     +-----------+-----------+-----------+
     | Rectangle | Rectangle | Polygon   |
     |           | Polygon   | Polygon   |
@@ -496,8 +427,6 @@ const float RADIANS = PI / 180.f;
     +-----------+-----------+-----------+
  */
 
-//	template<typename T>
-	
 
 } // End namespace euclib
 
