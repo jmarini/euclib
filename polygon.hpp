@@ -25,6 +25,7 @@
 #include <complex>
 #include <vector>
 #include <algorithm>
+#include <cassert>
 #include "point.hpp"
 #include "rect.hpp"
 #include "segment.hpp"
@@ -141,13 +142,20 @@ public:
 		add_points( std::forward<Points>( points )... );
 	}
 
-	// TODO: should not just call variadic version to avoid calls to
-	//       graham_hull at every point
+	// TODO: calls graham_hull in sets of 100 because it chokes
+	//       on large data sets
 	void add_points( const std::vector<point2<T>>& points ) {
 		m_hull.reserve( points.size( ) );
-		for( auto itr = points.begin( ); itr != points.end( ); ++itr ) {
-			add_points( *itr );
+		unsigned int i;
+		for( unsigned int j = 1; j < points.size( ); ++j ) {
+			for( i = (j-1)*100; i < 100*j && i < points.size( ); ++i ) {
+				if( points[i] != point2<T>::null( ) ) {
+					m_hull.push_back( points[i] );
+				}
+			}
+			graham_hull( );
 		}
+		calc_bounding_box( );
 	}
 
 	point2<T> operator [] ( int index ) const {
@@ -160,7 +168,7 @@ private:
 		graham_hull( );
 		calc_bounding_box( );
 	}
-	
+
 	T direction( const point2<T>& pt0, const point2<T>& pt1, const point2<T>& pt2 ) const {
 		return ( (pt1.x-pt0.x)*(pt2.y-pt0.y) - (pt1.y-pt0.y)*(pt2.x-pt0.x) );
 	}
@@ -187,24 +195,31 @@ private:
 			}
 			
 		}
-		point2<T> tmp = *best;
 
-		// sort points by angle hoizontally out from the point found above
-		std::sort( m_hull.begin( ), m_hull.end( ),
-			[tmp](point2<T> l, point2<T> r)->bool {
-				if( l == tmp ) { return true; }
-				else if( r == tmp ) { return false; }
-				float angle1 = atan2( l.y - tmp.y, l.x - tmp.x );
-				float angle2 = atan2( r.y - tmp.y, r.x - tmp.x );
-				if( std::abs(angle1 - angle2) <= std::numeric_limits<float>::epsilon( ) ) {
-					if( std::abs(l.x-r.x) <= limit_t::epsilon( ) ) {
-						return (bool)(r.y - l.y > limit_t::epsilon( ) );
+		// sort points by angle
+		struct sort_angle {
+			public:
+				sort_angle( const point2<T>& pt ) : best( pt ) { }
+				
+				bool operator () ( const point2<T>& l, const point2<T>& r ) {
+					if( l == best ) { return true; }
+					else if( r == best ) { return false; }
+					float ang1 = atan2( l.y - best.y, l.x - best.x );
+					float ang2 = atan2( r.y - best.y, r.x - best.x );
+					// same angle
+					if( equal( ang1, ang2 ) ) {
+						if( equal( r.y, l.y ) ) {
+							return greater_than( r.x, l.x );
+						}
+						return greater_than( r.y, l.y );
 					}
-					return (bool)(r.x - l.x > limit_t::epsilon( ) );
+					return greater_than( ang2, ang1 );
 				}
-				return ( angle2 - angle1 > std::numeric_limits<float>::epsilon( ) );
-			}
-		);
+
+			private:
+				point2<T> best;
+		};
+		std::sort( m_hull.begin( ), m_hull.end( ), sort_angle(*best) );
 
 		// these points are definitely in the hull
 		stack.push_back( *m_hull.begin( ) );
@@ -214,19 +229,21 @@ private:
 		for( auto itr = m_hull.begin( ) + 2; itr != m_hull.end( ); ++itr ) {
 			if( stack.size( ) < 2 ) { stack.push_back( *itr ); }
 			else {
-				// only left turns allowed
+				// left turn
 				T dir = direction( *(stack.rbegin()+1), *stack.rbegin(), *itr );
-				if( dir > limit_t::epsilon( ) ) {
+				if( greater_than( dir, T(0) ) ) {
 					stack.push_back( *itr );
 				}
-				else if( std::abs(dir) <= limit_t::epsilon( ) ) {
+				// straight
+				else if( equal( dir, T(0) ) ) {
 					float d1 = segment2<T>( *(stack.rbegin( )+1), *itr ).length( );
 					float d2 = segment2<T>( *(stack.rbegin( )+1), *stack.rbegin( ) ).length( );
-					if( d1 - d2 > std::numeric_limits<float>::epsilon( ) ) {
+					if( equal( d1, d2 ) ) {
 						stack.pop_back( );
 						--itr;
 					}
 				}
+				// right turn
 				else {
 					stack.pop_back( );
 					--itr;
@@ -266,13 +283,7 @@ private:
 	}
 
 	void check_valid( ) {
-		auto itr = m_hull.begin( );
-		while( itr != m_hull.end( ) ) {
-			if( *itr == point2<T>::null( ) ) {
-				itr = m_hull.erase( itr );
-			}
-			else { ++itr; }
-		}
+		std::remove( m_hull.begin( ), m_hull.end( ), point2<T>::null( ) );
 		if( m_hull.size( ) < 3 ) {
 			set_null( );
 		}

@@ -1,4 +1,4 @@
-/*	euclib_helper.hpp  v 0.0.5.10.1122
+/*	euclib_helper.hpp  v 0.0.6.10.1122
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -104,8 +104,10 @@ const float RADIANS = PI / 180.f;
 	template<typename T>
 	polygon2<T> translate( const polygon2<T>& poly, T x, T y ) {
 		polygon2<T> new_poly{ poly };
-		for( unsigned int i = 0; i < new_poly.m_hull.size( ); ++i ) {
-			new_poly.m_hull[i] = translate( new_poly.m_hull[i], x, y );
+		for( auto itr = new_poly.m_hull.begin( );
+		     itr != new_poly.m_hull.end( ); ++itr
+		   ) {
+			*itr = translate( *itr, x, y );
 		}
 		new_poly.m_bounding_box = translate( new_poly.m_bounding_box, x, y );
 		return new_poly;
@@ -167,8 +169,10 @@ const float RADIANS = PI / 180.f;
 	polygon2<T> rotate( const polygon2<T>& target, const point2<T>& about,
 	                    float angle, bool clockwise = true ) {
 		polygon2<T> poly { target };
-		for( unsigned int i = 0; i < poly.m_hull.size( ); ++i ) {
-			poly.m_hull[i] = rotate( poly.m_hull[i], about, angle, clockwise );
+		for( auto itr = poly.m_hull.begin( );
+		     itr != poly.m_hull.end( ); ++itr
+		   ) {
+			*itr = rotate( *itr, about, angle, clockwise );
 		}
 		return poly;
 	}
@@ -177,30 +181,37 @@ const float RADIANS = PI / 180.f;
 /********************
  * Mirror Functions *
  ********************/
-/*
+
 	template<typename T>
 	point2<T> mirror( const point2<T>& target, const line2<T>& over ) {
 		// translate point & line to origin
-		line2<T> t_over = translate( over, -over.pt1.x, -over.pt1.y );
-		point2<T> t_targ = translate( target, -over.pt1.x, -over.pt1.y );
+		line2<T> t_over = translate( over, -over.start_pt( ).x,
+		                                   -over.start_pt( ).y );
+		point2<T> t_targ = translate( target, -over.start_pt( ).x,
+		                                      -over.start_pt( ).y );
 		
 		// get translation matrix
-		float length = t_over.length( ) * t_over.length( );
+		float length = segment2<T>{ point2<T>{ 0, 0 }, t_over.end_pt( ) }.length( );
+		length *= length;
 		float matrix[4] = {
-			((float)t_over.pt2.x*(float)t_over.pt2.x - (float)t_over.pt2.y*(float)t_over.pt2.y),
-			2*(float)t_over.pt2.x*(float)t_over.pt2.y,
-			2*(float)t_over.pt2.x*(float)t_over.pt2.y,
-			((float)t_over.pt2.y*(float)t_over.pt2.y - (float)t_over.pt2.x*(float)t_over.pt2.x)
+			static_cast<float>( t_over.end_pt( ).x*t_over.end_pt( ).x -
+			                    t_over.end_pt( ).y*t_over.end_pt( ).y ),
+			static_cast<float>( 2 * t_over.end_pt( ).x * t_over.end_pt( ).y ),
+			static_cast<float>( 2 * t_over.end_pt( ).x * t_over.end_pt( ).y ),
+			static_cast<float>( t_over.end_pt( ).y*t_over.end_pt( ).y -
+			                    t_over.end_pt( ).x*t_over.end_pt( ).x )
 		};
-		if( std::abs( length ) > std::numeric_limits<float>::epsilon( ) ) {
+		if( not_equal( length, 0.f ) ) {
 			for( int i = 0; i < 4; ++i ) {
 				matrix[i] /= length;
 			}
 		}
 
 		// calculate new point
-		point2f tmp = { matrix[0]*(float)t_targ.x+matrix[1]*(float)t_targ.y,
-		                matrix[2]*(float)t_targ.x+matrix[3]*(float)t_targ.y };
+		point2f tmp = { ( matrix[0]*static_cast<float>(t_targ.x) +
+		                  matrix[1]*static_cast<float>(t_targ.y) ),
+		                ( matrix[2]*static_cast<float>(t_targ.x) +
+		                  matrix[3]*static_cast<float>(t_targ.y) ) };
 		// reduce rounding errors if T is an integer type
 		if( std::numeric_limits<T>::is_integer ) {
 			tmp.x += 0.5f;
@@ -208,12 +219,21 @@ const float RADIANS = PI / 180.f;
 		}
 		
 		// translate back
-		return translate( point2<T>{ (T)tmp.x, (T)tmp.y }, over.pt1.x, over.pt1.y );
+		return translate( point2<T>{ static_cast<T>(tmp.x),
+		                             static_cast<T>(tmp.y) },
+		                  over.start_pt( ).x, over.start_pt( ).y );
+	}
+
+	template<typename T>
+	segment2<T> mirror( const segment2<T>& target, const line2<T>& over ) {
+		return segment2<T>{ mirror( target.pt1, over ),
+		                    mirror( target.pt2, over ) };
 	}
 	
 	template<typename T>
 	line2<T> mirror( const line2<T>& target, const line2<T>& over ) {
-		return line2<T>{ mirror( target.pt1, over ), mirror( target.pt2, over ) };
+		return line2<T>{ mirror( target.start_pt( ), over ),
+		                 mirror( target.end_pt( ), over ) };
 	}
 
 	template<typename T>
@@ -224,7 +244,7 @@ const float RADIANS = PI / 180.f;
 		}
 		return poly;
 	}
-*/
+
 
 /*********************************
  * Overlap (Intersect) Functions *
@@ -250,8 +270,6 @@ const float RADIANS = PI / 180.f;
     +-----------+-----------+-----------+
  */
 
-	// TODO: should the lines go on forever??
-
 	// point with *
 
 	template<typename T>
@@ -263,7 +281,17 @@ const float RADIANS = PI / 180.f;
 			return point2<T>::null( );
 		}
 	}
-/*	
+
+	template<typename T>
+	point2<T> overlap( const point2<T>& pt, const segment2<T>& segment ) {
+		// check if either is null
+		if( pt == point2<T>::null( ) || segment == segment2<T>::null( ) ) {
+			return point2<T>::null( );
+		}
+		// not working??
+		return overlap( pt, make_line( segment ) );
+	}
+
 	template<typename T>
 	point2<T> overlap( const point2<T>& pt, const line2<T>& line ) {
 		// check if either is null
@@ -271,24 +299,12 @@ const float RADIANS = PI / 180.f;
 			return point2<T>::null( );
 		}
 		
-		// vertical line
-		if( line.slope( ) == std::numeric_limits<float>::infinity( ) ) {
-			if( std::abs(line.pt1.x -pt.x) <= std::numeric_limits<T>::epsilon( ) ) {
-				return pt;
-			}
-			return point2<T>::null( );
-		}
-		
-		// general line
-		float y = line.slope( ) * (float)pt.x + line.intercept( );
-		if( std::abs( y - pt.y ) <= std::numeric_limits<float>::epsilon( ) ) {
+		if( equal( line.at_x( pt.x ), pt.y ) ) {
 			return pt;
 		}
-		else {
-			return point2<T>::null( );
-		}
+		return point2<T>::null( );
 	}
-*/	
+
 	template<typename T>
 	point2<T> overlap( const point2<T>& pt, const rect2<T>& rect ) {
 		// check if either is null
@@ -296,10 +312,10 @@ const float RADIANS = PI / 180.f;
 			return point2<T>::null( );
 		}
 		// general case
-		else if( pt.x - rect.l > std::numeric_limits<T>::epsilon( ) &&
-		         rect.r - pt.x > std::numeric_limits<T>::epsilon( ) &&
-		         pt.y - rect.t > std::numeric_limits<T>::epsilon( ) &&
-		         rect.b - pt.y > std::numeric_limits<T>::epsilon( ) ) {
+		else if( greater_equal( pt.x, rect.l ) &&
+		         less_equal( pt.x, rect.r ) &&
+		         greater_equal( pt.y, rect.t ) &&
+		         less_equal( pt.y, rect.b ) ) {
 			return pt;
 		}
 		else {
