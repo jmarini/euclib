@@ -1,12 +1,19 @@
 CMPL = g++
-FLGS = -Wall -Wextra -pedantic -g -std=c++0x
+FLGS = -Wall -Wextra -pedantic -std=c++0x
+DFLG = -g
 PROG = test
 PLOT = plot.out
 LIBS = 
 SRCS = main.cpp
 
 all:
+	$(CMPL) $(FLGS) $(DFLG) -o $(PROG) $(SRCS) $(LIBS)
+	
+release:
 	$(CMPL) $(FLGS) -o $(PROG) $(SRCS) $(LIBS)
+
+debug:
+	$(CMPL) $(FLGS) $(DFLG) -o $(PROG) $(SRCS) $(LIBS)
 
 clean:
 	rm -f $(PLOT) $(PROG)
