@@ -26,6 +26,7 @@
 #include <random>
 #include <algorithm>
 #include <functional>
+#include <time.h>
 
 #include "euclib.hpp" // includes all other files needed from euclib
 
