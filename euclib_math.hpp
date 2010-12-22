@@ -20,6 +20,9 @@
 #ifndef EUBLIB_MATH_HPP
 #define EUBLIB_MATH_HPP
 
+#include <limits>
+#include <complex>
+
 namespace euclib {
 
 // Get definitions from math.h or define our own versions
@@ -99,6 +102,28 @@ inline bool less_equal( T lhs, T rhs ) {
 template<typename T>
 inline bool greater_equal( T lhs, T rhs ) {
 	return !(lhs < rhs);
+}
+
+template<typename T>
+void round_nearest( double& value ) {
+	if( std::numeric_limits<T>::is_integer ) { // make sure it rounds to nearest
+		switch( std::numeric_limits<T>::round_style ) {
+			case 0:  // round to 0
+				if( less_than( value, 0 ) { value -= 0.5; }
+				else { value += 0.5; }
+				break;
+			case 2:  // round to inf
+				value -= 0.5;
+				break;
+			case 3:  // round to -inf
+				value += 0.5;
+				break;
+			case -1: // indeterminate
+			default:
+				assert(false);
+			case 1:  // round toward nearest
+		}
+	}
 }
 
 } // End namespace euclib

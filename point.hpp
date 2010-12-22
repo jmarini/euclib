@@ -1,4 +1,4 @@
-/*	point.hpp  v 0.9.0.10.1221
+/*	point.hpp  v 0.9.1.10.1221
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -20,8 +20,6 @@
 #ifndef EUBLIB_POINT_HPP
 #define EUBLIB_POINT_HPP
 
-#include <limits>
-#include <complex>
 #include <array>
 
 #include "euclib_math.hpp"
@@ -80,19 +78,6 @@ public:
 	void set( unsigned int i, T value ) {
 		assert( i < D );
 		base_t::m_data[i] = value;
-	}
-
-
-	T dot( const point_base<T,D>& pt ) {
-		T sum = 0;
-		for( unsigned int i = 0; i < D; ++i ) {
-			sum += m_data[i] * pt.m_data[i];
-		}
-		return sum;
-	}
-
-	T inner( const point_base<T,D>& pt ) {
-		return dot( pt );
 	}
 
 	unsigned int dimension( ) const { return D; }
@@ -181,6 +166,21 @@ public:
 	template<typename ... Args>
 	point( T value, Args... values ) : base_t( value, values... ) { }
 
+
+// Methods
+public:
+
+	T dot( const point_base<T,D>& pt ) {
+		T sum = 0;
+		for( unsigned int i = 0; i < D; ++i ) {
+			sum += m_data[i] * pt.m_data[i];
+		}
+		return sum;
+	}
+
+	T inner( const point_base<T,D>& pt ) {
+		return dot( pt );
+	}
 
 }; // End class point<T,D>
 
@@ -302,23 +302,26 @@ public:
 // Various typedefs to make usage easier
 typedef point<int,2>           point2i;
 typedef point<float,2>         point2f;
+typedef point<double,2>        point2d;
 typedef point<unsigned int,2>  point2u;
 
 typedef point<int,3>           point3i;
 typedef point<float,3>         point3f;
+typedef point<double,3>        point3d;
 typedef point<unsigned int,3>  point3u;
 
 typedef point<int,4>           point4i;
 typedef point<float,4>         point4f;
+typedef point<double,4>        point4d;
 typedef point<unsigned int,4>  point4u;
 
 
 // Initialize invalid with either infinity or max
 template<typename T, unsigned int D>
 T point_base<T,D>::invalid = ( point_base<T,D>::limit_t::has_infinity ?
-                                 point_base<T,D>::limit_t::infinity( )
+                                   point_base<T,D>::limit_t::infinity( )
                              : // else
-                                 point_base<T,D>::limit_t::max( )
+                                   point_base<T,D>::limit_t::max( )
                              );
 
 }  // End namespace euclib
