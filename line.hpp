@@ -1,4 +1,4 @@
-/*	line.hpp  v 0.1.4.10.1122
+/*	line.hpp  v 0.4.0.10.1220
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -20,20 +20,19 @@
 #ifndef EUBLIB_LINE_HPP
 #define EUBLIB_LINE_HPP
 
-#include <ostream>
-#include <limits>
-#include <complex>
+#include "euclib_math.hpp"
 #include "point.hpp"
+#include "direction.hpp"
 
 namespace euclib {
 
-template<typename T>
-class line2 {
+template<typename T, unsigned int D>
+class line_base {
 // Typdefs
 protected:
 
-	typedef std::numeric_limits<T>     limit_t;
-	typedef std::numeric_limits<float> float_limit_t;
+	typedef std::numeric_limits<T>      limit_t;
+	typedef std::numeric_limits<double> double_limit_t;
 
 	// This class can only be used with scalar types
 	//   or types with a specific specialization
@@ -41,10 +40,10 @@ protected:
 	               "type not compatible with std::numeric_limits" );
 
 // Variables
-private:
+protected:
 
-	point2<T> pt1;
-	point2<T> pt2;
+	point<T,D>          m_point;      // line defined as passing through a point
+	direction<double,D> m_direction;  //   in a direction
 
 	static T invalid; // holds either limit_t::infinity or limit_t::max
 
@@ -52,17 +51,19 @@ private:
 // Constructors
 public:
 
-	line2( ) { set_null( ); }
-	line2( const line2<T>& line ) { *this = line; }
-	line2( line2<T>&& line ) { *this = std::move( line ); }
-	line2( const point2<T>& p1, const point2<T>& p2 ) {
-		pt1 = p1;
-		pt2 = p2;
+	line_base( ) { set_null( ); }
+	line_base( const line_base<T,D>& line ) { *this = line; }
+	line_base( line_base<T,D>&& line ) { *this = std::move( line ); }
+	line_base( const point<T,D>& pt1, const point<T,D>& pt2 ) {
+		m_point = pt1;
+		m_direction = direction<double,D>{
+		                  static_cast<double>( pt2.x( ) - pt1.x( ) ),
+		                  static_cast<double>( pt2.y( ) - pt1.y( ) ) };
 		check_valid( );
 	}
-	line2( T x1, T y1, T x2, T y2 ) {
-		pt1 = point2<T>{ x1, y1 };
-		pt2 = point2<T>{ x2, y2 };
+	line_base( const point<T,D>& pt, const direction<double,D>& dir ) :
+		m_point( pt ),
+		m_dir( dir ) {
 		check_valid( );
 	}
 
@@ -71,142 +72,172 @@ public:
 public:
 
 	// Returns a null line, defined as point2<T>::null --> point2<T>::null
-	static line2<T> null( ) {
-		static line2<T> null = line2<T>{ point2<T>::null( ),
-		                                 point2<T>::null( ) };
+	static line<T,D> null( ) {
+		static line2<T> null = line2<T>{ point<T,D>::null( ),
+		                                 direction<double,D>::null( ) };
 		return null;
 	}
 
-	float slope( ) const {
-		// same x coordinate
-		if( equal(pt1.x, pt2.x) ) {
-			return float_limit_t::infinity( );
-		}
-		
-		return static_cast<float>(pt2.y-pt1.y) / static_cast<float>(pt2.x-pt1.x);
-	}
-	
-	T intercept( ) const {
-		if( slope( ) == float_limit_t::infinity( ) ) {
-			return float_limit_t::infinity( );
-		}
-
-		float tmp = slope( ) * static_cast<float>(pt1.x);
-		if( limit_t::is_integer ) { tmp += 0.5f; } // reduce rounding errors
-
-		return pt1.y - static_cast<T>(tmp);
-	}
-
-	T at_x( T x ) const {	
-		float slp = slope( );
-		// vertical line
-		if( slp == float_limit_t::infinity( ) ) {
-			return invalid;
-		}
-		// horizontal line
-		else if( equal( slp, 0.f ) ) {
-			return pt1.y;
-		}
-
-		float tmp = slp * static_cast<float>(x);
-		if( limit_t::is_integer ) { tmp += 0.5f; } // reduce rounding errors
-		return intercept( ) + static_cast<T>(tmp);
-	}
-	
-	T at_y( T y ) const {
-		float slp = slope( );
-		// vertical line
-		if( slp == float_limit_t::infinity( ) ) {
-			return pt1.x;
-		}
-		// horizontal line
-		else if( equal( slp, 0.f ) ) {
-			return invalid;
-		}
-
-		float tmp = static_cast<float>( pt1.x - intercept( ) );
-		if( limit_t::is_integer ) { tmp += 0.5f; } // reduce rounding errors
-		return static_cast<T>( tmp / slp );
-	}
-	
-	inline point2<T> start_pt( ) const { return pt1; }
-	inline point2<T> end_pt( ) const { return pt2; }
+	point<T,D>          point( ) const     { return m_point; }
+	direction<double,D> direction( ) const { return m_direction; }
 
 
-private:
+protected:
 
 	inline void check_valid( ) {
-		if( pt1 == point2<T>::null( ) || pt2 == point2<T>::null( ) ) {
-			set_null( );
-		}
-		else if( pt1 == pt2 ) {
+		if( m_point == point<T,D>::null( ) ||
+		    m_direction == direction<double,D>::null( )
+		  ) {
 			set_null( );
 		}
 	}
 	
 	inline void set_null( ) {
-		pt1 = pt2 = point2<T>::null( );
+		m_point = point<T,D>::null( );
+		m_direction = direction<double,D>::null( );
 	}
 
 
 // Operators
 public:
 
-	line2<T>& operator = ( const line2<T>& line ) {
-		pt1 = line.pt1;
-		pt2 = line.pt2;
+	line_base<T,D>& operator = ( const line_base<T,D>& line ) {
+		m_point = line.m_point;
+		m_direction = line.m_direction;
 		check_valid( );
 		return *this;
 	}
 	
-	line2<T>& operator = ( line2<T>&& line ) {
-		std::swap( pt1, line.pt1 );
-		std::swap( pt2, line.pt2 );
+	line_base<T,D>& operator = ( line_base<T,D>&& line ) {
+		std::swap( m_point, line.m_point );
+		std::swap( m_direction, line.m_direction );
 		check_valid( );
 		return *this;
 	}
 	
 	// Checks either orientation
-	bool operator == ( const line2<T>& line ) const {
-		return ( pt1 == line.pt1 && pt2 == line.pt2 ) ||
-		       ( pt1 == line.pt2 && pt2 == line.pt1 );
+	bool operator == ( const line_base<T,D>& line ) const {
+		return ( m_point == line.m_point && m_direction == line.m_direction );
 	}
 	
-	bool operator != ( const line2<T>& line ) const {
+	bool operator != ( const line_base<T,D>& line ) const {
 		return !(*this == line);
 	}
+
+}; // End class line_base<T,D>
+
+template<typename T, unsigned int D>
+class line : public line_base<T,D> {
+// Typedefs
+protected:
+
+	typedef line_base<T,D>              base_t;
+	typedef std::numeric_limits<T>      limit_t;
+	typedef std::numeric_limits<double> double_limit_t;
+
+
+// Constructors
+public:
+
+	line( ) : base_t( ) { }
+	line( const base_t& line ) : base_t( line ) { }
+	line( base_t&& line ) : base_t( std::forward( line ) ) { }
+	line( const point<T,D>& pt1, const point<T,D>& pt2 ) :
+		base_t( pt1, pt2 ) { }
+	line( const point<T,D>& pt, const direction<double,D>& dir ) :
+		base_t( pt, dir ) { }
+
+}; // End class line<T,D>
+
+template<typename T>
+class line<T,2> : public line_base<T,2> {
+// Typedefs
+protected:
+
+	typedef line_base<T,2>              base_t;
+	typedef std::numeric_limits<T>      limit_t;
+	typedef std::numeric_limits<double> double_limit_t;
+
+
+// Constructors
+public:
+
+	line( ) : base_t( ) { }
+	line( const base_t& line ) : base_t( line ) { }
+	line( base_t&& line ) : base_t( std::forward( line ) ) { }
+	line( const point<T,2>& pt1, const point<T,2>& pt2 ) :
+		base_t( pt1, pt2 ) { }
+	line( const point<T,2>& pt, const direction2d>& dir ) :
+		base_t( pt, dir ) { }
+
+
+// Methods
+public:
+
+	double slope( ) const {
+		// vertical line
+		if( equal( m_direction.x, 0 ) ) {
+			return double_limit_t::infinity( );
+		}
+		
+		return m_direction.y( ) / m_direction.x( );
+	}
 	
-	// TODO: gnuplot cannot handle inf in equation
-	//       needs some work to properly handle everything
-	friend std::ostream& operator << ( std::ostream& stream,
-	                                   const line2<T>& line ) {
-		#ifdef GNUPLOT
-			if( line.slope( ) == float_limit_t::infinity( ) ) {
-				return stream << "(y) = " << line.pt1.x << "\n";
-			}
-			else {
-				return stream << "(x) = " << line.slope( )
-				              << " * x + " << line.intercept( ) << "\n";
-			}
-		#else
-			return stream << line.pt1 << "-->" << line.pt2;
-		#endif
+	T intercept( ) const {
+		// vertical line
+		if( equal( m_direction.x, 0 ) ) {
+			return double_limit_t::infinity( );
+		}
+
+		double tmp = slope( ) * static_cast<double>(m_point.x( ));
+		return m_point.y( ) - static_cast<T>( round_nearest(tmp) );
 	}
 
+	T at_x( T x ) const {
+		// vertical line
+		if( equal( m_direction.x, 0 ) ) {
+			return invalid;
+		}
+		// horizontal line
+		else if( equal( m_direction.y, 0 ) ) {
+			return m_point.y( );
+		}
 
-}; // End class line2<T>
+		float tmp = slope( ) * static_cast<double>(x);
+		return intercept( ) + static_cast<T>( round_nearest(tmp) );
+	}
+	
+	T at_y( T y ) const {
+		// vertical line
+		if( equal( m_direction.x, 0 ) ) {
+			return m_point.x( );
+		}
+		// horizontal line
+		else if( equal( m_direction.y, 0 ) ) {
+			return invalid;
+		}
 
-typedef line2<int>           line2i;
-typedef line2<float>         line2f;
-typedef line2<unsigned int>  line2u;
+		double tmp = static_cast<double>(point.x( )) - intercept( );
+		tmp *= m_direction.x( ) / m_direction.y( ); // tmp * 1/slope
+		return static_cast<T>( round_nearest(tmp) );
+	}
+
+}; // End class line<T,2>
+
+
+// Various typedefs to make usage easier
+typedef line<int,2>           line2i;
+typedef line<float,2>         line2f;
+typedef line<double,2>        line2d;
+typedef line<unsigned int,2>  line2u;
 
 // Initialize invalid with either infinity or max
-template<typename T>
-T line2<T>::invalid = ( line2<T>::limit_t::has_infinity ?
-                            line2<T>::limit_t::infinity( )
-                        : // else
-                            line2<T>::limit_t::max( )
-                      );
+template<typename T, unsigned int D>
+T line_base<T,D>::invalid = ( line<T,D>::limit_t::has_infinity ?
+                                  line<T,D>::limit_t::infinity( )
+                              : // else
+                                  line<T,D>::limit_t::max( )
+                            );
 
 }  // End namespace euclib
 

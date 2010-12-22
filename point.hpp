@@ -299,6 +299,7 @@ public:
 
 }; // End class point<T,4>
 
+
 // Various typedefs to make usage easier
 typedef point<int,2>           point2i;
 typedef point<float,2>         point2f;
