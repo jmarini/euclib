@@ -1,4 +1,4 @@
-/*	point.hpp  v 0.9.1.10.1221
+/*	point.hpp  v 0.9.1.10.1222
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -51,7 +51,7 @@ protected: // cannot construct directly
 
 	point_base( ) { set_null( ); }
 	point_base( const point_base<T,D>& pt ) { *this = pt; }
-	point_base( point_base<T,D>& pt ) { *this = std:move( pt ); }
+	point_base( point_base<T,D>& pt ) { *this = std::move( pt ); }
 	// Limit number of arguments to size of point
 	//   can have fewer, remaining spots filled with 0
 	template<typename ... Args>
@@ -59,7 +59,7 @@ protected: // cannot construct directly
 		static_assert( sizeof...(values) < D,
 		               "too many arguments to constructor" );
 		fill( 0, value, values... );
-	} 
+	}
 
 
 // Methods
@@ -68,16 +68,6 @@ public:
 	static point_base<T,D> null( ) {
 		static point_base<T,D> null = point_base<T,D>{ invalid, invalid };
 		return null;
-	}
-
-	T get( unsigned int i ) const {
-		assert( i < D );
-		return base_t::m_data[i];
-	}
-
-	void set( unsigned int i, T value ) {
-		assert( i < D );
-		base_t::m_data[i] = value;
 	}
 
 	unsigned int dimension( ) const { return D; }
@@ -93,7 +83,7 @@ protected:
 			}
 		}
 	}
-	
+
 	void set_null( ) {
 		for( unsigned int i = 0; i < D; ++i ) {
 			m_data[i] = invalid;
@@ -102,13 +92,13 @@ protected:
 
 	template<typename ... Args>
 	void fill( unsigned int i, T value, Args... values ) {
-		base_t::m_data[i] = value;
+		m_data[i] = value;
 		fill( i + 1, values... );
 	}
 
 	inline void fill( unsigned int i ) {
-		for( i; i < D; ++i ) {
-			base_t::m_data[i] = 0;
+		for( ; i < D; ++i ) {
+			m_data[i] = 0;
 		}
 	}
 
@@ -143,8 +133,14 @@ public:
 		return *this;
 	}
 
+	T& operator [] ( unsigned int i ) {
+		assert( i < D );
+		return m_data[i];
+	}
+
 	T operator [] ( unsigned int i ) const {
-		return get(i);
+		assert( i < D );
+		return m_data[i];
 	}
 
 }; // End class point_base<T,D>
@@ -173,7 +169,7 @@ public:
 	T dot( const point_base<T,D>& pt ) {
 		T sum = 0;
 		for( unsigned int i = 0; i < D; ++i ) {
-			sum += m_data[i] * pt.m_data[i];
+			sum += base_t::m_data[i] * pt.m_data[i];
 		}
 		return sum;
 	}
@@ -205,17 +201,17 @@ public:
 // Methods
 public:
 
-	T  x( ) const { return base_t::m_data[0]; }
-	T  y( ) const { return base_t::m_data[1]; }
-	void x( T x ) { base_t::m_data[0] = x; }
-	void y( T y ) { base_t::m_data[1] = y; }
+	T&  x( ) { return base_t::m_data[0]; }
+	T&  y( ) { return base_t::m_data[1]; }
+	T   x( ) const { return base_t::m_data[0]; }
+	T   y( ) const { return base_t::m_data[1]; }
 
 	T cross( const point<T,2>& pt ) const {
-		return base_t::m_data[0] * pt::base_t::m_data[1] -
-		       base_t::m_data[1] * pt::base_t::m_data[0];
+		return base_t::m_data[0] * pt.m_data[1] -
+		       base_t::m_data[1] * pt.m_data[0];
 	}
 
-	const T* const to_gl( ) const { return m_data.data( ); }
+	const T* to_gl( ) const { return base_t::m_data.data( ); }
 
 }; // End class point<T,2>
 
@@ -241,25 +237,25 @@ public:
 // Methods
 public:
 
-	T  x( ) const { return base_t::m_data[0]; }
-	T  y( ) const { return base_t::m_data[1]; }
-	T  z( ) const { return base_t::m_data[2]; }
-	void x( T x ) { base_t::m_data[0] = x; }
-	void y( T y ) { base_t::m_data[1] = y; }
-	void z( T z ) { base_t::m_data[2] = z; }
+	T&  x( ) { return base_t::m_data[0]; }
+	T&  y( ) { return base_t::m_data[1]; }
+	T&  z( ) { return base_t::m_data[2]; }
+	T   x( ) const { return base_t::m_data[0]; }
+	T   y( ) const { return base_t::m_data[1]; }
+	T   z( ) const { return base_t::m_data[2]; }
 
 	point<T,3> cross( const point<T,3>& pt ) const {
 		point<T,3> result;
-		result::base_t.m_data[0] = base_t::m_data[1] * pt::base_t::m_data[2] -
-		                           base_t::m_data[2] * pt::base_t::m_data[1];
-		result::base_t.m_data[1] = base_t::m_data[0] * pt::base_t::m_data[2] -
-		                           base_t::m_data[2] * pt::base_t::m_data[0];
-		result::base_t.m_data[2] = base_t::m_data[0] * pt::base_t::m_data[1] -
-		                           base_t::m_data[1] * pt::base_t::m_data[0];
+		result.m_data[0] = base_t::m_data[1] * pt.m_data[2] -
+		                   base_t::m_data[2] * pt.m_data[1];
+		result.m_data[1] = base_t::m_data[0] * pt.m_data[2] -
+		                   base_t::m_data[2] * pt.m_data[0];
+		result.m_data[2] = base_t::m_data[0] * pt.m_data[1] -
+		                   base_t::m_data[1] * pt.m_data[0];
 		return result;
 	}
 
-	const T* const to_gl( ) const { return m_data.data( ); }
+	const T* to_gl( ) const { return base_t::m_data.data( ); }
 
 }; // End class point<T,3>
 
@@ -286,16 +282,16 @@ public:
 // Methods
 public:
 
-	T  x( ) const { return base_t::m_data[0]; }
-	T  y( ) const { return base_t::m_data[1]; }
-	T  z( ) const { return base_t::m_data[2]; }
-	T  w( ) const { return base_t::m_data[3]; }
-	void x( T x ) { base_t::m_data[0] = x; }
-	void y( T y ) { base_t::m_data[1] = y; }
-	void z( T z ) { base_t::m_data[2] = z; }
-	void w( T w ) { base_t::m_data[3] = w; }
+	T&  x( ) { return base_t::m_data[0]; }
+	T&  y( ) { return base_t::m_data[1]; }
+	T&  z( ) { return base_t::m_data[2]; }
+	T&  w( ) { return base_t::m_data[3]; }
+	T   x( ) const { return base_t::m_data[0]; }
+	T   y( ) const { return base_t::m_data[1]; }
+	T   z( ) const { return base_t::m_data[2]; }
+	T   w( ) const { return base_t::m_data[3]; }
 
-	const T* const to_gl( ) const { return m_data.data( ); }
+	const T* to_gl( ) const { return base_t::m_data.data( ); }
 
 }; // End class point<T,4>
 
