@@ -22,6 +22,7 @@
 
 #include <limits>
 #include <complex>
+#include <cassert>
 
 namespace euclib {
 
@@ -109,7 +110,7 @@ void round_nearest( double& value ) {
 	if( std::numeric_limits<T>::is_integer ) { // make sure it rounds to nearest
 		switch( std::numeric_limits<T>::round_style ) {
 			case 0:  // round to 0
-				if( less_than( value, 0 ) { value -= 0.5; }
+				if( less_than( value, 0. ) ) { value -= 0.5; }
 				else { value += 0.5; }
 				break;
 			case 2:  // round to inf
@@ -122,6 +123,7 @@ void round_nearest( double& value ) {
 			default:
 				assert(false);
 			case 1:  // round toward nearest
+				break;
 		}
 	}
 }

@@ -158,7 +158,7 @@ public:
 
 	point( ) : base_t( ) { }
 	point( const point<T,D>& pt ) : base_t( pt ) { }
-	point( point<T,D>&& pt ) : base_t( std::forward( pt ) ) { }
+	point( point<T,D>&& pt ) : base_t( std::forward<point<T,D>>( pt ) ) { }
 	template<typename ... Args>
 	point( T value, Args... values ) : base_t( value, values... ) { }
 
@@ -193,7 +193,7 @@ public:
 
 	point( ) : base_t( ) { }
 	point( const point<T,2>& pt ) : base_t( pt ) { }
-	point( point<T,2>&& pt ) : base_t( std::forward( pt ) ) { }
+	point( point<T,2>&& pt ) : base_t( std::forward<point<T,2>>( pt ) ) { }
 	point( T x ) : base_t( x ) { }
 	point( T x, T y ) : base_t( x, y ) { }
 
@@ -228,7 +228,7 @@ public:
 
 	point( ) : base_t( ) { }
 	point( const point<T,3>& pt ) : base_t( pt ) { }
-	point( point<T,3>&& pt ) : base_t( std::forward( pt ) ) { }
+	point( point<T,3>&& pt ) : base_t( std::forward<point<T,3>>( pt ) ) { }
 	point( T x ) : base_t( x ) { }
 	point( T x, T y ) : base_t( x, y ) { }
 	point( T x, T y, T z ) : base_t( x, y, z ) { }
@@ -272,7 +272,7 @@ public:
 
 	point( ) : base_t( ) { }
 	point( const point<T,4>& pt ) : base_t( pt ) { }
-	point( point<T,4>&& pt ) : base_t( std::forward( pt ) ) { }
+	point( point<T,4>&& pt ) : base_t( std::forward<point<T,4>>( pt ) ) { }
 	point( T x ) : base_t( x ) { }
 	point( T x, T y ) : base_t( x, y ) { }
 	point( T x, T y, T z ) : base_t( x, y, z ) { }
