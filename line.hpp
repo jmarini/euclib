@@ -1,4 +1,4 @@
-/*	line.hpp  v 0.4.0.10.1220
+/*	line.hpp  v 0.4.0.10.1222
  *
  *	Copyright (C) 2010 Jonathan Marini
  *
@@ -56,14 +56,15 @@ public:
 	line_base( line_base<T,D>&& line ) { *this = std::move( line ); }
 	line_base( const point<T,D>& pt1, const point<T,D>& pt2 ) {
 		m_point = pt1;
-		m_direction = direction<double,D>{
+		m_direction = direction<double,D> {
 		                  static_cast<double>( pt2.x( ) - pt1.x( ) ),
-		                  static_cast<double>( pt2.y( ) - pt1.y( ) ) };
+		                  static_cast<double>( pt2.y( ) - pt1.y( ) )
+		              };
 		check_valid( );
 	}
 	line_base( const point<T,D>& pt, const direction<double,D>& dir ) :
 		m_point( pt ),
-		m_dir( dir ) {
+		m_direction( dir ) {
 		check_valid( );
 	}
 
@@ -72,14 +73,16 @@ public:
 public:
 
 	// Returns a null line, defined as point2<T>::null --> point2<T>::null
-	static line<T,D> null( ) {
-		static line2<T> null = line2<T>{ point<T,D>::null( ),
-		                                 direction<double,D>::null( ) };
+	static line_base<T,D> null( ) {
+		static line_base<T,D> null = line_base<T,D>{
+		                                 point<T,D>::null( ),
+		                                 direction<double,D>::null( )
+		                             };
 		return null;
 	}
 
-	point<T,D>          point( ) const     { return m_point; }
-	direction<double,D> direction( ) const { return m_direction; }
+	point<T,D>          base_point( ) const     { return m_point; }
+	direction<double,D> base_direction( ) const { return m_direction; }
 
 
 protected:
@@ -91,7 +94,7 @@ protected:
 			set_null( );
 		}
 	}
-	
+
 	inline void set_null( ) {
 		m_point = point<T,D>::null( );
 		m_direction = direction<double,D>::null( );
@@ -107,19 +110,19 @@ public:
 		check_valid( );
 		return *this;
 	}
-	
+
 	line_base<T,D>& operator = ( line_base<T,D>&& line ) {
 		std::swap( m_point, line.m_point );
 		std::swap( m_direction, line.m_direction );
 		check_valid( );
 		return *this;
 	}
-	
+
 	// Checks either orientation
 	bool operator == ( const line_base<T,D>& line ) const {
 		return ( m_point == line.m_point && m_direction == line.m_direction );
 	}
-	
+
 	bool operator != ( const line_base<T,D>& line ) const {
 		return !(*this == line);
 	}
@@ -141,13 +144,12 @@ public:
 
 	line( ) : base_t( ) { }
 	line( const base_t& line ) : base_t( line ) { }
-	line( base_t&& line ) : base_t( std::forward( line ) ) { }
-	line( const point<T,D>& pt1, const point<T,D>& pt2 ) :
-		base_t( pt1, pt2 ) { }
-	line( const point<T,D>& pt, const direction<double,D>& dir ) :
-		base_t( pt, dir ) { }
+	line( base_t&& line ) : base_t( std::forward<base_t>( line ) ) { }
+	line( const point<T,D>& pt1, const point<T,D>& pt2 ) : base_t( pt1, pt2 ) { }
+	line( const point<T,D>& pt, const direction<double,D>& dir ) : base_t( pt, dir ) { }
 
 }; // End class line<T,D>
+
 
 template<typename T>
 class line<T,2> : public line_base<T,2> {
@@ -165,10 +167,8 @@ public:
 	line( ) : base_t( ) { }
 	line( const base_t& line ) : base_t( line ) { }
 	line( base_t&& line ) : base_t( std::forward( line ) ) { }
-	line( const point<T,2>& pt1, const point<T,2>& pt2 ) :
-		base_t( pt1, pt2 ) { }
-	line( const point<T,2>& pt, const direction2d>& dir ) :
-		base_t( pt, dir ) { }
+	line( const point<T,2>& pt1, const point<T,2>& pt2 ) : base_t( pt1, pt2 ) { }
+	line( const point<T,2>& pt, const direction2d& dir ) : base_t( pt, dir ) { }
 
 
 // Methods
@@ -176,50 +176,50 @@ public:
 
 	double slope( ) const {
 		// vertical line
-		if( equal( m_direction.x, 0 ) ) {
-			return double_limit_t::infinity( );
-		}
-		
-		return m_direction.y( ) / m_direction.x( );
-	}
-	
-	T intercept( ) const {
-		// vertical line
-		if( equal( m_direction.x, 0 ) ) {
+		if( equal( base_t::m_direction.x( ), 0 ) ) {
 			return double_limit_t::infinity( );
 		}
 
-		double tmp = slope( ) * static_cast<double>(m_point.x( ));
-		return m_point.y( ) - static_cast<T>( round_nearest(tmp) );
+		return base_t::m_direction.y( ) / base_t::m_direction.x( );
+	}
+
+	T intercept( ) const {
+		// vertical line
+		if( equal( base_t::m_direction.x( ), 0 ) ) {
+			return double_limit_t::infinity( );
+		}
+
+		double tmp = slope( ) * static_cast<double>(base_t::m_point.x( ));
+		return base_t::m_point.y( ) - static_cast<T>( round_nearest<T>(tmp) );
 	}
 
 	T at_x( T x ) const {
 		// vertical line
-		if( equal( m_direction.x, 0 ) ) {
-			return invalid;
+		if( equal( base_t::m_direction.x( ), 0 ) ) {
+			return base_t::invalid;
 		}
 		// horizontal line
-		else if( equal( m_direction.y, 0 ) ) {
-			return m_point.y( );
+		else if( equal( base_t::m_direction.y( ), 0 ) ) {
+			return base_t::m_point.y( );
 		}
 
 		float tmp = slope( ) * static_cast<double>(x);
-		return intercept( ) + static_cast<T>( round_nearest(tmp) );
+		return intercept( ) + static_cast<T>( round_nearest<T>(tmp) );
 	}
-	
+
 	T at_y( T y ) const {
 		// vertical line
-		if( equal( m_direction.x, 0 ) ) {
-			return m_point.x( );
+		if( equal( base_t::m_direction.x( ), 0 ) ) {
+			return base_t::m_point.x( );
 		}
 		// horizontal line
-		else if( equal( m_direction.y, 0 ) ) {
-			return invalid;
+		else if( equal( base_t::m_direction.y( ), 0 ) ) {
+			return base_t::invalid;
 		}
 
-		double tmp = static_cast<double>(point.x( )) - intercept( );
-		tmp *= m_direction.x( ) / m_direction.y( ); // tmp * 1/slope
-		return static_cast<T>( round_nearest(tmp) );
+		double tmp = static_cast<double>(base_t::m_point.x( )) - intercept( );
+		tmp *= base_t::m_direction.x( ) / base_t::m_direction.y( ); // tmp * 1/slope
+		return static_cast<T>( round_nearest<T>(tmp) );
 	}
 
 }; // End class line<T,2>

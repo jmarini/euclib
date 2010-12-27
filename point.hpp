@@ -145,6 +145,7 @@ public:
 
 }; // End class point_base<T,D>
 
+
 template<typename T, unsigned int D>
 class point : public point_base<T,D> {
 // Typedefs
@@ -157,8 +158,8 @@ protected:
 public:
 
 	point( ) : base_t( ) { }
-	point( const point<T,D>& pt ) : base_t( pt ) { }
-	point( point<T,D>&& pt ) : base_t( std::forward<point<T,D>>( pt ) ) { }
+	point( const base_t& pt ) : base_t( pt ) { }
+	point( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
 	template<typename ... Args>
 	point( T value, Args... values ) : base_t( value, values... ) { }
 
@@ -166,7 +167,7 @@ public:
 // Methods
 public:
 
-	T dot( const point_base<T,D>& pt ) {
+	T dot( const point<T,D>& pt ) {
 		T sum = 0;
 		for( unsigned int i = 0; i < D; ++i ) {
 			sum += base_t::m_data[i] * pt.m_data[i];
@@ -174,11 +175,8 @@ public:
 		return sum;
 	}
 
-	T inner( const point_base<T,D>& pt ) {
-		return dot( pt );
-	}
-
 }; // End class point<T,D>
+
 
 template<typename T>
 class point<T,2> : public point_base<T,2> {
@@ -192,8 +190,8 @@ protected:
 public:
 
 	point( ) : base_t( ) { }
-	point( const point<T,2>& pt ) : base_t( pt ) { }
-	point( point<T,2>&& pt ) : base_t( std::forward<point<T,2>>( pt ) ) { }
+	point( const base_t& pt ) : base_t( pt ) { }
+	point( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
 	point( T x ) : base_t( x ) { }
 	point( T x, T y ) : base_t( x, y ) { }
 
@@ -206,14 +204,18 @@ public:
 	T   x( ) const { return base_t::m_data[0]; }
 	T   y( ) const { return base_t::m_data[1]; }
 
+	T dot( const point<T,2>& pt ) {
+		return base_t::m_data[0] * pt.m_data[0] + base_t::m_data[1] * pt.m_data[1];
+	}
+
 	T cross( const point<T,2>& pt ) const {
-		return base_t::m_data[0] * pt.m_data[1] -
-		       base_t::m_data[1] * pt.m_data[0];
+		return base_t::m_data[0] * pt.m_data[1] - base_t::m_data[1] * pt.m_data[0];
 	}
 
 	const T* to_gl( ) const { return base_t::m_data.data( ); }
 
 }; // End class point<T,2>
+
 
 template<typename T>
 class point<T,3> : public point_base<T,3> {
@@ -227,8 +229,8 @@ protected:
 public:
 
 	point( ) : base_t( ) { }
-	point( const point<T,3>& pt ) : base_t( pt ) { }
-	point( point<T,3>&& pt ) : base_t( std::forward<point<T,3>>( pt ) ) { }
+	point( const base_t& pt ) : base_t( pt ) { }
+	point( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
 	point( T x ) : base_t( x ) { }
 	point( T x, T y ) : base_t( x, y ) { }
 	point( T x, T y, T z ) : base_t( x, y, z ) { }
@@ -243,6 +245,12 @@ public:
 	T   x( ) const { return base_t::m_data[0]; }
 	T   y( ) const { return base_t::m_data[1]; }
 	T   z( ) const { return base_t::m_data[2]; }
+
+	T dot( const point<T,3>& pt ) {
+		return base_t::m_data[0] * pt.m_data[0] +
+		       base_t::m_data[1] * pt.m_data[1] +
+		       base_t::m_data[2] * pt.m_data[2];
+	}
 
 	point<T,3> cross( const point<T,3>& pt ) const {
 		point<T,3> result;
@@ -259,6 +267,7 @@ public:
 
 }; // End class point<T,3>
 
+
 template<typename T>
 class point<T,4> : public point_base<T,4> {
 // Typedefs
@@ -271,8 +280,8 @@ protected:
 public:
 
 	point( ) : base_t( ) { }
-	point( const point<T,4>& pt ) : base_t( pt ) { }
-	point( point<T,4>&& pt ) : base_t( std::forward<point<T,4>>( pt ) ) { }
+	point( const base_t& pt ) : base_t( pt ) { }
+	point( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
 	point( T x ) : base_t( x ) { }
 	point( T x, T y ) : base_t( x, y ) { }
 	point( T x, T y, T z ) : base_t( x, y, z ) { }
@@ -290,6 +299,13 @@ public:
 	T   y( ) const { return base_t::m_data[1]; }
 	T   z( ) const { return base_t::m_data[2]; }
 	T   w( ) const { return base_t::m_data[3]; }
+
+	T dot( const point<T,4>& pt ) {
+		return base_t::m_data[0] * pt.m_data[0] +
+		       base_t::m_data[1] * pt.m_data[1] +
+		       base_t::m_data[2] * pt.m_data[2] +
+		       base_t::m_data[3] * pt.m_data[3];
+	}
 
 	const T* to_gl( ) const { return base_t::m_data.data( ); }
 

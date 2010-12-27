@@ -26,7 +26,7 @@
 namespace euclib {
 
 template<typename T, unsigned int D>
-class direction : point_base<T,D> {
+class direction : public point_base<T,D> {
 // Typedefs
 protected:
 
@@ -37,16 +37,16 @@ protected:
 // Variables
 private:
 	double m_length;
+
+
 // Constructors
 public:
 
 	direction( ) : base_t( ) { m_length = double_limit_t::infinity( ); }
-	point( const base_t& pt ) : base_t( pt ) { calc_length( ); }
-	point( base_t&& pt ) : base_t( std::forward( pt ) ) { calc_length( ); }
+	direction( const base_t& pt ) : base_t( pt ) { calc_length( ); }
+	direction( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { calc_length( ); }
 	template<typename ... Args>
-	point( T value, Args... values ) : base_t( value, values... ) {
-		calc_length( );
-	}
+	direction( T value, Args... values ) : base_t( value, values... ) { calc_length( ); }
 
 
 // Methods
@@ -56,7 +56,7 @@ public:
 		direction<double,D> result;
 
 		for( unsigned int i = 0; i < D; ++i ) {
-			result.set( static_cast<double>(base::m_data[i]) / m_length ); 
+			result[i] = static_cast<double>(base_t::m_data[i]) / m_length;
 		}
 		return result;
 	}
@@ -69,13 +69,185 @@ private:
 	void calc_length( ) {
 		T length = 0;
 		for( unsigned int i = 0; i < D; ++i ) {
-			length += result[i] * result[i];
+			length += base_t::m_data[i] * base_t::m_data[i];
 		}
 		m_length = sqrt( static_cast<double>(length) );
 	}
 
 }; // End class direction<T,D>
 
+
+template<typename T>
+class direction<T,2> : public point_base<T,2> {
+// Typedefs
+protected:
+
+	typedef point_base<T,2>             base_t;
+	typedef std::numeric_limits<double> double_limit_t;
+
+
+// Variables
+private:
+	double m_length;
+
+
+// Constructors
+public:
+
+	direction( ) : base_t( ) { m_length = double_limit_t::infinity( ); }
+	direction( const base_t& pt ) : base_t( pt ) { calc_length( ); }
+	direction( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { calc_length( ); }
+	template<typename ... Args>
+	direction( T value, Args... values ) : base_t( value, values... ) { calc_length( ); }
+
+
+// Methods
+public:
+
+	direction<double,2> normalize( ) const {
+		direction<double,2> result {
+		    static_cast<double>(base_t::m_data[0]) / m_length,
+		    static_cast<double>(base_t::m_data[1]) / m_length
+		};
+		return result;
+	}
+
+	double length( ) const { return m_length; }
+
+	T&  x( ) { return base_t::m_data[0]; }
+	T&  y( ) { return base_t::m_data[1]; }
+	T   x( ) const { return base_t::m_data[0]; }
+	T   y( ) const { return base_t::m_data[1]; }
+
+
+private:
+
+	void calc_length( ) {
+		T length = base_t::m_data[0] * base_t::m_data[0] + base_t::m_data[1] * base_t::m_data[1];
+		m_length = sqrt( static_cast<double>(length) );
+	}
+
+}; // End class direction<T,2>
+
+
+template<typename T>
+class direction<T,3> : public point_base<T,3> {
+// Typedefs
+protected:
+
+	typedef point_base<T,3>             base_t;
+	typedef std::numeric_limits<double> double_limit_t;
+
+
+// Variables
+private:
+	double m_length;
+
+
+// Constructors
+public:
+
+	direction( ) : base_t( ) { m_length = double_limit_t::infinity( ); }
+	direction( const base_t& pt ) : base_t( pt ) { calc_length( ); }
+	direction( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { calc_length( ); }
+	template<typename ... Args>
+	direction( T value, Args... values ) : base_t( value, values... ) { calc_length( ); }
+
+
+// Methods
+public:
+
+	direction<double,3> normalize( ) const {
+		direction<double,3> result {
+		    static_cast<double>(base_t::m_data[0]) / m_length,
+		    static_cast<double>(base_t::m_data[1]) / m_length,
+		    static_cast<double>(base_t::m_data[2]) / m_length
+		};
+		return result;
+	}
+
+	double length( ) const { return m_length; }
+
+	T&  x( ) { return base_t::m_data[0]; }
+	T&  y( ) { return base_t::m_data[1]; }
+	T&  z( ) { return base_t::m_data[2]; }
+	T   x( ) const { return base_t::m_data[0]; }
+	T   y( ) const { return base_t::m_data[1]; }
+	T   z( ) const { return base_t::m_data[2]; }
+
+
+private:
+
+	void calc_length( ) {
+		T length = base_t::m_data[0] * base_t::m_data[0] +
+		           base_t::m_data[1] * base_t::m_data[1] +
+		           base_t::m_data[2] * base_t::m_data[2];
+		m_length = sqrt( static_cast<double>(length) );
+	}
+
+}; // End class direction<T,3>
+
+
+template<typename T>
+class direction<T,4> : public point_base<T,4> {
+// Typedefs
+protected:
+
+	typedef point_base<T,4>             base_t;
+	typedef std::numeric_limits<double> double_limit_t;
+
+
+// Variables
+private:
+	double m_length;
+
+
+// Constructors
+public:
+
+	direction( ) : base_t( ) { m_length = double_limit_t::infinity( ); }
+	direction( const base_t& pt ) : base_t( pt ) { calc_length( ); }
+	direction( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { calc_length( ); }
+	template<typename ... Args>
+	direction( T value, Args... values ) : base_t( value, values... ) { calc_length( ); }
+
+
+// Methods
+public:
+
+	direction<double,4> normalize( ) const {
+		direction<double,4> result {
+		    static_cast<double>(base_t::m_data[0]) / m_length,
+		    static_cast<double>(base_t::m_data[1]) / m_length,
+		    static_cast<double>(base_t::m_data[2]) / m_length,
+		    static_cast<double>(base_t::m_data[3]) / m_length
+		};
+		return result;
+	}
+
+	double length( ) const { return m_length; }
+
+	T&  x( ) { return base_t::m_data[0]; }
+	T&  y( ) { return base_t::m_data[1]; }
+	T&  z( ) { return base_t::m_data[2]; }
+	T&  w( ) { return base_t::m_data[3]; }
+	T   x( ) const { return base_t::m_data[0]; }
+	T   y( ) const { return base_t::m_data[1]; }
+	T   z( ) const { return base_t::m_data[2]; }
+	T   w( ) const { return base_t::m_data[3]; }
+
+
+private:
+
+	void calc_length( ) {
+		T length = base_t::m_data[0] * base_t::m_data[0] +
+		           base_t::m_data[1] * base_t::m_data[1] +
+		           base_t::m_data[2] * base_t::m_data[2] +
+		           base_t::m_data[3] * base_t::m_data[3];
+		m_length = sqrt( static_cast<double>(length) );
+	}
+
+}; // End class direction<T,4>
 
 // Various typedefs to make usage easier
 typedef direction<int,2>           direction2i;
