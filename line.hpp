@@ -66,8 +66,9 @@ public:
 	line_base( const point<T,D>& pt, const direction<R,D>& dir ) :
 		m_point( pt ) {
 		for( unsigned int i = 0; i < D; ++i ) {
-			m_direction[i] = static_cast<double>( dir[i] );
+			m_direction = static_cast<double>( dir[i] );
 		}
+		m_direction.calc_length( );
 		check_valid( );
 	}
 
@@ -121,7 +122,7 @@ public:
 		return *this;
 	}
 
-	// Checks either orientation
+	// TODO: needs to be fixed, different for line and segment
 	bool operator == ( const line_base<T,D>& line ) const {
 		return ( m_point == line.m_point && m_direction == line.m_direction );
 	}

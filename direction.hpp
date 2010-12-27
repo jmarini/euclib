@@ -26,6 +26,9 @@
 namespace euclib {
 
 template<typename T, unsigned int D>
+class line_base;
+
+template<typename T, unsigned int D>
 class direction : public point_base<T,D> {
 // Typedefs
 protected:
@@ -63,9 +66,6 @@ public:
 
 	double length( ) const { return m_length; }
 
-
-private:
-
 	void calc_length( ) {
 		T length = 0;
 		for( unsigned int i = 0; i < D; ++i ) {
@@ -84,7 +84,6 @@ protected:
 
 	typedef point_base<T,2>             base_t;
 	typedef std::numeric_limits<double> double_limit_t;
-
 
 // Variables
 private:
@@ -114,13 +113,8 @@ public:
 
 	double length( ) const { return m_length; }
 
-	T&  x( ) { return base_t::m_data[0]; }
-	T&  y( ) { return base_t::m_data[1]; }
 	T   x( ) const { return base_t::m_data[0]; }
 	T   y( ) const { return base_t::m_data[1]; }
-
-
-private:
 
 	void calc_length( ) {
 		T length = base_t::m_data[0] * base_t::m_data[0] + base_t::m_data[1] * base_t::m_data[1];
@@ -174,9 +168,6 @@ public:
 	T   x( ) const { return base_t::m_data[0]; }
 	T   y( ) const { return base_t::m_data[1]; }
 	T   z( ) const { return base_t::m_data[2]; }
-
-
-private:
 
 	void calc_length( ) {
 		T length = base_t::m_data[0] * base_t::m_data[0] +
@@ -235,9 +226,6 @@ public:
 	T   y( ) const { return base_t::m_data[1]; }
 	T   z( ) const { return base_t::m_data[2]; }
 	T   w( ) const { return base_t::m_data[3]; }
-
-
-private:
 
 	void calc_length( ) {
 		T length = base_t::m_data[0] * base_t::m_data[0] +

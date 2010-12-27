@@ -106,6 +106,12 @@ protected:
 // Operators
 public:
 
+	T operator [] ( unsigned int i ) const {
+		assert( i < D );
+		return m_data[i];
+	}
+
+	// TODO: different for point and direction...
 	bool operator == ( const point_base<T,D>& pt ) {
 		for( unsigned int i = 0; i < D; ++i ) {
 			if( !( (m_data[i] == invalid && pt.m_data[i] == invalid) ||
@@ -120,12 +126,12 @@ public:
 	bool operator != ( const point_base<T,D>& pt ) {
 		return !(*this == pt);
 	}
-
+/*
 	point_base<T,D>& operator = ( const point_base<T,D>& pt ) {
 		m_data = pt.m_data;
 		check_valid( );
 		return *this;
-	}
+	}*/
 
 	point_base<T,D>& operator = ( point_base<T,D>&& pt ) {
 		std::swap( m_data, pt.m_data );
@@ -133,14 +139,115 @@ public:
 		return *this;
 	}
 
-	T& operator [] ( unsigned int i ) {
-		assert( i < D );
-		return m_data[i];
+	template<typename R>
+	point_base<T,D>& operator = ( const point_base<R,D>& pt ) {
+		for( unsigned int i = 0; i < D; ++i ) {
+			m_data[i] = static_cast<T>( pt.m_data[i] );
+		}
+		check_valid( );
+		return *this;
 	}
 
-	T operator [] ( unsigned int i ) const {
-		assert( i < D );
-		return m_data[i];
+	template<typename R>
+	point_base<T,D> operator + ( const point_base<R,D>& pt ) const {
+		point_base<T,D> result;
+		for( unsigned int i = 0; i < D; ++i ) {
+			result.m_data[i] = m_data[i] + static_cast<T>(pt[i]);
+		}
+		return result;
+	}
+
+	template<typename R>
+	point_base<T,D> operator + ( R value ) const {
+		point_base<T,D> result;
+		for( unsigned int i = 0; i < D; ++i ) {
+			result.m_data[i] = m_data[i] + static_cast<T>(value);
+		}
+		return result;
+	}
+
+	template<typename R>
+	point_base<T,D>& operator += ( const point_base<R,D>& pt ) {
+		for( unsigned int i = 0; i < D; ++i ) {
+			m_data[i] += static_cast<T>(pt[i]);
+		}
+		return *this;
+	}
+
+	template<typename R>
+	point_base<T,D>& operator += ( R value ) {
+		for( unsigned int i = 0; i < D; ++i ) {
+			m_data[i] += static_cast<T>(value);
+		}
+		return *this;
+	}
+
+	template<typename R>
+	point_base<T,D> operator - ( const point_base<R,D>& pt ) const {
+		point_base<T,D> result;
+		for( unsigned int i = 0; i < D; ++i ) {
+			result.m_data[i] = m_data[i] - static_cast<T>(pt[i]);
+		}
+		return result;
+	}
+
+	template<typename R>
+	point_base<T,D> operator - ( R value ) const {
+		point_base<T,D> result;
+		for( unsigned int i = 0; i < D; ++i ) {
+			result.m_data[i] = m_data[i] - static_cast<T>(value);
+		}
+		return result;
+	}
+
+	template<typename R>
+	point_base<T,D>& operator -= ( const point_base<R,D>& pt ) {
+		for( unsigned int i = 0; i < D; ++i ) {
+			m_data[i] -= static_cast<T>(pt[i]);
+		}
+		return *this;
+	}
+
+	template<typename R>
+	point_base<T,D>& operator -= ( R value ) {
+		for( unsigned int i = 0; i < D; ++i ) {
+			m_data[i] -= static_cast<T>(value);
+		}
+		return *this;
+	}
+
+	template<typename R>
+	point_base<T,D> operator * ( const point_base<R,D>& pt ) const {
+		point_base<T,D> result;
+		for( unsigned int i = 0; i < D; ++i ) {
+			result.m_data[i] = m_data[i] * static_cast<T>(pt[i]);
+		}
+		return result;
+	}
+
+	template<typename R>
+	point_base<T,D> operator * ( R value ) const {
+		point_base<T,D> result;
+		for( unsigned int i = 0; i < D; ++i ) {
+			result.m_data[i] = m_data[i] * static_cast<T>(value);
+		}
+		return result;
+	}
+
+	template<typename R>
+	point_base<T,D>& operator *= ( const point_base<R,D>& pt ) {
+		for( unsigned int i = 0; i < D; ++i ) {
+			m_data[i] *= static_cast<T>(pt[i]);
+		}
+		return *this;
+	}
+
+	template<typename R>
+	point_base<T,D>& operator *= ( R value ) {
+		for( unsigned int i = 0; i < D; ++i ) {
+			m_data[i] *= static_cast<T>(value);
+		}
+		return *this;
 	}
 
 }; // End class point_base<T,D>
@@ -173,6 +280,15 @@ public:
 			sum += base_t::m_data[i] * pt.m_data[i];
 		}
 		return sum;
+	}
+
+
+// Operators
+public:
+
+	T& operator [] ( unsigned int i ) {
+		assert( i < D );
+		return base_t::m_data[i];
 	}
 
 }; // End class point<T,D>
