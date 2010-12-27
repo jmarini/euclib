@@ -62,9 +62,12 @@ public:
 		              };
 		check_valid( );
 	}
-	line_base( const point<T,D>& pt, const direction<double,D>& dir ) :
-		m_point( pt ),
-		m_direction( dir ) {
+	template<typename R>
+	line_base( const point<T,D>& pt, const direction<R,D>& dir ) :
+		m_point( pt ) {
+		for( unsigned int i = 0; i < D; ++i ) {
+			m_direction[i] = static_cast<double>( dir[i] );
+		}
 		check_valid( );
 	}
 
@@ -146,7 +149,8 @@ public:
 	line( const base_t& line ) : base_t( line ) { }
 	line( base_t&& line ) : base_t( std::forward<base_t>( line ) ) { }
 	line( const point<T,D>& pt1, const point<T,D>& pt2 ) : base_t( pt1, pt2 ) { }
-	line( const point<T,D>& pt, const direction<double,D>& dir ) : base_t( pt, dir ) { }
+	template<typename R>
+	line( const point<T,D>& pt, const direction<R,D>& dir ) : base_t( pt, dir ) { }
 
 }; // End class line<T,D>
 
@@ -166,9 +170,10 @@ public:
 
 	line( ) : base_t( ) { }
 	line( const base_t& line ) : base_t( line ) { }
-	line( base_t&& line ) : base_t( std::forward( line ) ) { }
+	line( base_t&& line ) : base_t( std::forward<base_t>( line ) ) { }
 	line( const point<T,2>& pt1, const point<T,2>& pt2 ) : base_t( pt1, pt2 ) { }
-	line( const point<T,2>& pt, const direction2d& dir ) : base_t( pt, dir ) { }
+	template<typename R>
+	line( const point<T,2>& pt, const direction<R,2>& dir ) : base_t( pt, dir ) { }
 
 
 // Methods
