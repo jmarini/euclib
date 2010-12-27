@@ -121,6 +121,21 @@ public:
 		m_length = sqrt( static_cast<double>(length) );
 	}
 
+
+// Operators
+public:
+
+	bool operator == ( const direction<T,2>& pt ) const {
+		double slope1, slope2;
+		slope1 = static_cast<double>(base_t::m_data[0]) / static_cast<double>(base_t::m_data[1]);
+		slope2 = static_cast<double>(pt[0]) / static_cast<double>(pt[1]);
+		return equal( slope1, slope2 );
+	}
+
+	bool operator != ( const direction<T,2>& pt ) const {
+		return !(*this == pt);
+	}
+
 }; // End class direction<T,2>
 
 

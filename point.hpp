@@ -37,6 +37,8 @@ protected:
 	//   or types with a specialization of numeric_limits
 	static_assert( limit_t::is_specialized,
 	               "type not compatible with std::numeric_limits" );
+	static_assert( D != 0, "cannot have 0-dimensional object" );
+
 
 // Variables
 protected:
@@ -111,11 +113,10 @@ public:
 		return m_data[i];
 	}
 
-	// TODO: different for point and direction...
-	bool operator == ( const point_base<T,D>& pt ) {
+	bool operator == ( const point_base<T,D>& pt ) const {
 		for( unsigned int i = 0; i < D; ++i ) {
-			if( !( (m_data[i] == invalid && pt.m_data[i] == invalid) ||
-			       equal( m_data[i], pt.m_data[i] ) )
+			if( !( (m_data[i] == invalid && pt[i] == invalid) ||
+			       equal( m_data[i], pt[i] ) )
 			  ) {
 				return false;
 			}
@@ -123,27 +124,18 @@ public:
 		return true;
 	}
 
-	bool operator != ( const point_base<T,D>& pt ) {
+	bool operator != ( const point_base<T,D>& pt ) const {
 		return !(*this == pt);
 	}
-/*
+
 	point_base<T,D>& operator = ( const point_base<T,D>& pt ) {
 		m_data = pt.m_data;
 		check_valid( );
 		return *this;
-	}*/
+	}
 
 	point_base<T,D>& operator = ( point_base<T,D>&& pt ) {
 		std::swap( m_data, pt.m_data );
-		check_valid( );
-		return *this;
-	}
-
-	template<typename R>
-	point_base<T,D>& operator = ( const point_base<R,D>& pt ) {
-		for( unsigned int i = 0; i < D; ++i ) {
-			m_data[i] = static_cast<T>( pt.m_data[i] );
-		}
 		check_valid( );
 		return *this;
 	}
