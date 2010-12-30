@@ -28,7 +28,10 @@
 #include <functional>
 #include <time.h>
 
-#include "euclib.hpp" // includes all other files needed from euclib
+#include "point.hpp"
+#include "direction.hpp"
+#include "line.hpp"
+#include "segment.hpp"
 
 using namespace euclib;
 using namespace std;
@@ -39,240 +42,82 @@ int main( int argc, char *argv[] ) {
 	if( argc == 2 ) {
 		seed = atoi(argv[1]);
 	}
-	
-	// min and max values when plottings
+
+	// min and max values when plotting
 	int max = 10;
-//	int min = -1;
-	
+
 	// random number unif_gen
-	uniform_real_distribution<float> unif(0, max);
-	normal_distribution<float> norm( max/2, max/10 );
+	uniform_real_distribution<float> unif_distr(0, max);
+	normal_distribution<float> norm_distr( max/2, max/10 );
 	mt19937 engine( seed );
-	auto unif_gen = bind(unif, engine);
-	auto norm_gen = bind(norm, engine);
+	auto unif = bind(unif_distr, engine);
+	auto norm = bind(norm_distr, engine);
 
-	// set up gnuplot
-	ofstream out( "plot.out" );
-	out << "set xrange [" << max*-1.5 << ":" << max*1.5 << "]\n"
-	    << "set yrange [" << max*-1.5 << ":" << max*1.5 << "]\n"
-	    << "unset mouse\nset size square\n";
-	// seed in title to recreate results
-	    
-	// POINT SETUP (1 random point,origin)
-	point2f pt1 { unif_gen( ), unif_gen( ) };
-	point2f origin { 0.f, 0.f };
-	// ROTATE / MIRROR SETUP  (point,line,angle)
-	point2f about { unif_gen( ), unif_gen( ) };
-	line2f over { about, point2f{ unif_gen( ), unif_gen( ) } };
-	float ang = unif_gen( ) * 18.f;
-	// POLYGON SETUP  (2 random polys)
-	int num_points = 20;
-	int num_points_norm = 1000;
-	polygon2f poly1;
-	for( int i = 0; i < num_points; i++ ) {
-		point2f pt { unif_gen( ), unif_gen( ) };
-		poly1.add_points( pt );
-	}
-	polygon2f poly2;
-	vector<point2f> vec;
-	vec.reserve( num_points_norm );
-	for( int i = 0; i < num_points_norm; i++ ) {
-		point2f pt { norm_gen( ), norm_gen( ) };
-		vec.push_back( pt );
-	}
-	poly2.add_points( vec );
-	// RECT SETUP  (2 random rects)
-	rect2f rect1 { point2f{ unif_gen( )/2, unif_gen( )/2 }, unif_gen( )/2, unif_gen( )/2 };	
-	rect2f rect2 { point2f{ unif_gen( )/2, unif_gen( )/2 }, unif_gen( )/2, unif_gen( )/2 };	
-	// LINE SETUP  (2 random lines)
-	segment2f seg1 { unif_gen( ), unif_gen( ), unif_gen( ), unif_gen( ) };
-	segment2f seg2 { unif_gen( ), unif_gen( ), unif_gen( ), unif_gen( ) };
-	line2f line1 = make_line( seg1 );
-	line2f line2 = make_line( seg2 );
-	
+	cout << "seed=" << seed << "\n";
 
+	//////////////////////////////////////////
+	//  Testing
 
-	int test_num = 0;
+	point2i pt1; // default
+	point2i pt2 { 1, 3 }; // list, same length
+	point2i pt3 { pt2 }; // copy
+	point2i pt4 { 2 }; // list, too short
+	point3i pt5 { 3, 4, 5 };
+	pt1 = pt4; // assignment
+	cout << "pt1:   " << pt1.x( ) << "," << pt1.y( ) << "\n";
+	cout << "pt2:   " << pt2.x( ) << "," << pt2.y( ) << "\n";
+	cout << "pt3:   " << pt3.x( ) << "," << pt3.y( ) << "\n";
+	cout << "pt4:   " << pt4.x( ) << "," << pt4.y( ) << "\n";
+	cout << "pt5:   " << pt5.x( ) << "," << pt5.y( ) << "," << pt5.z( ) << "\n";
+	pt1.x( ) = 4;
+	// 2 * [2,0] + [1,3] * 4 + 5 * [1,3] - [2,0]
+	pt4 = 2 * pt1 + pt2;// * 4 + 5 * pt2 - pt1; // testing out expression evaluation
+	cout << "pt1:   " << pt1.x( ) << "," << pt1.y( ) << "\n";
+	cout << "pt4:   " << pt4.x( ) << "," << pt4.y( ) << "\n";
+	cout << "pt2 == pt3: " << ( pt2 == pt3 ? "true\n" : "false\n" );
+	cout << "pt2 != pt4: " << ( pt2 != pt4 ? "true\n" : "false\n" );
 
-
-	// TEST 0 POLYGON-POINT INTERSECT
-	if( test_num == 0 ) {
-		point2f loc = overlap( about, poly1 );
-		std::cout << "Intersection at " << loc;
-
-		out << "set title 'seed = " << seed << " polygon-point intersection'"
-		    << "font 'Arial,12'\n"
-		    << "set style line 1 pointtype 7 linecolor rgb 'black'\n"
-		    << "set style line 2 pointtype 7 linecolor rgb 'red'\n"
-		    << "set style line 3 pointtype 7 linecolor rgb 'green'\n"
-		    << "plot '-' ls 1 with points notitle, "
-		    <<      "'-' ls 2 with linespoints notitle, "
-		    <<      "'-' ls 3 with linespoints notitle\n";
-
-		out << about << "e\n";
-		out << poly1.bounding_box( );
-		out << poly1;
-	}
-	
-	// TEST 1 LINE TRANSLATE
-	if( test_num == 1 ) {
-		line2f loc = translate( over, about.x/2, about.y/2 );
-
-		out << "set title 'seed = " << seed << "\tx = " << about.x/2 << ", y = " << about.y/2 << "'"
-		    << "font 'Arial,12'\n"
-		    << "set style line 1 pointtype 7 linecolor rgb 'black'\n"
-		    << "set style line 2 pointtype 7 linecolor rgb 'red'\n"
-		    << "set style line 3 pointtype 7 linecolor rgb 'green'\n"
-		    << "f" << loc
-		    << "g" << over
-		    << "plot '-' ls 1 with linespoints notitle, "
-		    << "f(x), g(x)\n";
-		
-		out << rect2f{ about, about.x/2, about.y/2 };
-	}
-	
-	// TEST 2 SEGMENT/POINT TRANSLATE
-	if( test_num == 2 ) {
-		segment2f loc = translate( seg1, about.x/2, about.y/2 );
-
-		out << "set title 'seed = " << seed << "\tx = " << about.x/2 << ", y = " << about.y/2 << "'"
-		    << "font 'Arial,12'\n"
-		    << "set style line 1 pointtype 7 linecolor rgb 'black'\n"
-		    << "set style line 2 pointtype 7 linecolor rgb 'red'\n"
-		    << "set style line 3 pointtype 7 linecolor rgb 'green'\n"
-		    << "plot '-' ls 1 with linespoints notitle, "
-		    <<      "'-' ls 2 with linespoints notitle, "
-		    <<      "'-' ls 3 with linespoints notitle\n";
-
-		out << rect2f{ seg1.pt1, about.x/2, about.y/2 };
-		out << seg1;
-		out << loc;
-	}
-	
-	// TEST 3 POLYGON TRANSLATE
-	if( test_num == 3 ) {
-		polygon2f loc = translate( poly1, about.x/2, about.y/2 );
-
-		out << "set title 'seed = " << seed << "\tx = " << about.x/2 << ", y = " << about.y/2 << "'"
-		    << "font 'Arial,12'\n"
-		    << "set style line 1 pointtype 7 linecolor rgb 'black'\n"
-		    << "set style line 2 pointtype 7 linecolor rgb 'red'\n"
-		    << "set style line 3 pointtype 7 linecolor rgb 'green'\n"
-		    << "plot '-' ls 1 with linespoints notitle, "
-		    <<      "'-' ls 2 with linespoints notitle, "
-		    <<      "'-' ls 3 with linespoints notitle\n";
-
-		out << rect2f{ poly1[0], about.x/2, about.y/2 };
-		out << poly1;
-		out << loc;
-	}
-	
-	// TEST 4 SEGMENT/POINT ROTATE
-	if( test_num == 4 ) {
-		segment2f loc = rotate( seg1, about, ang );
-		segment2f circ { about, seg1.pt1 };
-		segment2f circ2 { about, seg1.pt2 };
-
-		out << "set parametric\n"
-		    << "set title 'seed = " << seed << "\tangle = " << ang << "'"
-		    << "font 'Arial,12'\n"
-		    << "set style line 1 pointtype 7 linecolor rgb 'black'\n"
-		    << "set style line 2 pointtype 7 linecolor rgb 'red'\n"
-		    << "set style line 3 pointtype 7 linecolor rgb 'green'\n"
-		    << "plot [0:2*pi] " << circ.length( ) << "*sin(t)+" << about.x << ","<< circ.length( ) << "*cos(t)+" << about.y << " ls 1 notitle,"
-		    <<  circ2.length( ) << "*sin(t)+" << about.x << ","<< circ2.length( ) << "*cos(t)+" << about.y << " ls 1 notitle,"
-		    << "'-' ls 1 with points notitle, "
-		    << "'-' ls 2 with linespoints notitle, "
-		    << "'-' ls 3 with linespoints notitle\n";		
-		
-		out << origin << about << "e\n";
-		out << seg1;
-		out << loc;
-	}
-	
-	// TEST 5 POLYGON ROTATE
-	if( test_num == 5 ) {
-		polygon2f loc = rotate( poly1, about, ang );
-		segment2f circ { about, poly1[static_cast<unsigned int>(poly1.size( )/2)] };
-
-		out << "set parametric\n"
-		    << "set title 'seed = " << seed << "\tangle = " << ang << "'"
-		    << "font 'Arial,12'\n"
-		    << "set style line 1 pointtype 7 linecolor rgb 'black'\n"
-		    << "set style line 2 pointtype 7 linecolor rgb 'red'\n"
-		    << "set style line 3 pointtype 7 linecolor rgb 'green'\n"
-		    << "plot [0:2*pi] " << circ.length( ) << "*sin(t)+" << about.x << ","<< circ.length( ) << "*cos(t)+" << about.y << " ls 1 notitle,"
-		    << "'-' ls 1 with points notitle, "
-		    << "'-' ls 2 with linespoints notitle, "
-		    << "'-' ls 3 with linespoints notitle\n";
-		
-		out << origin << about << "e\n";
-		out << poly1;
-		out << loc;
-	}
-	
-	// TEST 6 POINT/SEGMENT MIRROR
-	if( test_num == 6 ) {
-		segment2f loc = mirror( seg1, over );
-		
-		out << "set title 'seed = " << seed << "'"
-		    << "font 'Arial,12'\n"
-		    << "set style line 1 pointtype 7 linecolor rgb 'black'\n"
-		    << "set style line 2 pointtype 7 linecolor rgb 'red'\n"
-		    << "set style line 3 pointtype 7 linecolor rgb 'green'\n"
-		    << "f" << over
-		    << "plot f(x) ls 1 notitle,"
-		    << "'-' ls 1 with points notitle, "
-		    << "'-' ls 2 with linespoints notitle, "
-		    << "'-' ls 3 with linespoints notitle\n";
-
-		out << origin << "e\n";
-		out << seg1;
-		out << loc;
+	point<int,10> pt6 { 1, 2, 3, 4, 5, 9 };
+	cout << "pt6:   ";
+	for( unsigned int i = 0; i < pt6.dimension( ); ++i ) {
+		cout << pt6[i] << ( i == pt6.dimension( ) - 1 ? "\n" : "," );
 	}
 
-	// TEST 7 POLYGON MIRROR
-	if( test_num == 7 ) {
-		polygon2f loc = mirror( poly1, over );
-		
-		out << "set title 'seed = " << seed << "'"
-		    << "font 'Arial,12'\n"
-		    << "set style line 1 pointtype 7 linecolor rgb 'black'\n"
-		    << "set style line 2 pointtype 7 linecolor rgb 'red'\n"
-		    << "set style line 3 pointtype 7 linecolor rgb 'green'\n"
-		    << "f" << over
-		    << "plot f(x) ls 1 notitle,"
-		    << "'-' ls 1 with points notitle, "
-		    << "'-' ls 2 with linespoints notitle, "
-		    << "'-' ls 3 with linespoints notitle\n";
+	direction2i dir1 { 3, 4 };
+	direction2i dir2 { pt1 };
+	direction2i dir3 { 6, 8 };
+	direction2i dir4 { dir1 };
+	cout << "dir1:  " << dir1[0] << " " << dir1[1] << "\n";
+	cout << "dir2:  " << dir2[0] << " " << dir2[1] << "\n";
+	cout << "dir3:  " << dir3[0] << " " << dir3[1] << "\n";
+	cout << "dir4:  " << dir4[0] << " " << dir4[1] << "\n";
+	cout << "dir1 != dir2: " << ( dir1 != dir2 ? "true\n" : "false\n" );
+	cout << "dir1 != dir3: " << ( dir1 != dir3 ? "true\n" : "false\n" );
+	cout << "dir1 != dir4: " << ( dir1 != dir4 ? "true\n" : "false\n" );
 
-		out << origin << "e\n";
-		out << poly1;
-		out << loc;
-	}
-	
-	// TEST 8 LINE-LINE INTERSECT
-	if( test_num == 8 ) {
-		point2f loc = overlap( pt1, seg1 );
-		
-		out << "set title 'seed = " << seed << "'"
-		    << "font 'Arial,12'\n"
-		    << "set style line 1 pointtype 7 linecolor rgb 'black'\n"
-		    << "set style line 2 pointtype 7 linecolor rgb 'red'\n"
-		    << "set style line 3 pointtype 7 linecolor rgb 'green'\n"
-		    << "plot '-' ls 1 with points notitle, "
-		    << "'-' ls 2 with linespoints notitle, "
-		    << "'-' ls 3 with linespoints notitle\n";
+	line2i line1;
+	cout << "line1: " << line1.base_point( ).x( ) << " " << line1.base_point( ).y( )
+	     << ",  " << line1.base_direction( ).x( ) << " " << line1.base_direction( ).y( ) << "\n";
+	line2i line2 { pt2, dir1 };
+	line2i line3 { line2 };
+	line1 = line3;
+	line2i line4 { pt2, pt4 };
+	cout << "line1: " << line1.base_point( ).x( ) << " " << line1.base_point( ).y( )
+	     << ",  " << line1.base_direction( ).x( ) << " " << line1.base_direction( ).y( ) << "\n";
+	cout << "line2: " << line2.base_point( ).x( ) << " " << line2.base_point( ).y( )
+	     << ",  " << line2.base_direction( ).x( ) << " " << line2.base_direction( ).y( ) << "\n";
+	cout << "line3: " << line3.base_point( ).x( ) << " " << line3.base_point( ).y( )
+	     << ",  " << line3.base_direction( ).x( ) << " " << line3.base_direction( ).y( ) << "\n";
+	cout << "line4: " << line4.base_point( ).x( ) << " " << line4.base_point( ).y( )
+	     << ",  " << line4.base_direction( ).x( ) << " " << line4.base_direction( ).y( ) << "\n";
 
-		out << origin << "e\n";
-		out << seg1;
-		out << pt1 << "e\n";
-		cout << "Intersection at " << loc;
-	}
-
-	// finish up the gnuplot output
-	out << "pause -1 'press enter to continue'\n";
-	out.close( );
+	segment<float,2,double> seg1 { point2f{ 1.f, 1.f }, point2f{ 2.45f, 5.67f } };
+	cout << "seg1:  " << seg1.base_point( ).x( ) << " " << seg1.base_point( ).y( )
+	     << ",  " << seg1.base_direction( ).x( ) << " " << seg1.base_direction( ).y( ) << "\n";
+	point2f ptf1 = seg1.extrapolate( 1 );
+	cout << "pt1:   " << ptf1.x( ) << "," << ptf1.y( ) << "\n";
+	ptf1 = seg1.extrapolate( -1 );
+	cout << "pt1:   " << ptf1.x( ) << "," << ptf1.y( ) << "\n";
 
 	return 0;
 }

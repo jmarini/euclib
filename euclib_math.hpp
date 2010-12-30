@@ -23,6 +23,8 @@
 #include <complex>
 #include <cassert>
 
+#include <iostream>
+
 namespace euclib {
 
 ////////////////////////////////////////
@@ -184,12 +186,42 @@ void round_nearest( float& value ) {
 //   i.e.  v1 + 3 * ( v2 + v3 )
 //   Adapted from:  J. Blinn, "Optimizing C++ Vector Expressions," in Notation, Notation, Notation.
 //                    San Francisco, Morgan Kaufmann, 2002, pp 237-253
-//  Ran into some problems where using the interface he used, any data type with operator []
-//   defined would construct validly, and I could not find a good static_assert to stop it,
-//   so I used a method __evaluate as a temporary fix.
+
+class expression { };
+
+template<typename T, typename INTERNAL = float>
+class container {
+// Typedefs
+protected:
+
+	typedef INTERNAL internal_t;
+
+
+// Variables
+private:
+
+	const T m_obj;
+
+
+// Constructor
+public:
+
+	container( const T& obj ) : m_obj( obj ) { }
+
+
+// Methods
+public:
+
+	internal_t operator [] ( unsigned int i ) const {
+		std::cout << "=== default[" << i << "]: " << m_obj[i] << "\n";
+		return m_obj[i];
+	}
+
+};
+
 
 template<typename L_EXPR, typename R_EXPR, typename INTERNAL = float>
-class sum {
+class sum : expression {
 // Typedefs
 protected:
 
@@ -211,15 +243,6 @@ public:
 	sum( const left_t& lhs, const right_t& rhs ) : m_lhs(lhs), m_rhs(rhs) { }
 
 
-
-// Methods
-public:
-
-	internal_t __evaluate ( unsigned int i ) const {
-		return m_lhs[i] + m_rhs[i];
-	}
-
-
 // Operators
 public:
 
@@ -231,7 +254,7 @@ public:
 
 
 template<typename L_EXPR, typename R_EXPR, typename INTERNAL = float>
-class difference {
+class difference : expression {
 // Typedefs
 protected:
 
@@ -253,15 +276,6 @@ public:
 	difference( const left_t& lhs, const right_t& rhs ) : m_lhs(lhs), m_rhs(rhs) { }
 
 
-
-// Methods
-public:
-
-	internal_t __evaluate ( unsigned int i ) const {
-		return m_lhs[i] + m_rhs[i];
-	}
-
-
 // Operators
 public:
 
@@ -273,7 +287,7 @@ public:
 
 
 template<typename T, typename INTERNAL = float>
-class product {
+class product : expression {
 // Typedefs
 protected:
 
@@ -293,13 +307,6 @@ public:
 	product( const internal_t scalar, const T& value ) : m_value( value ), m_scalar( scalar ) { }
 
 
-// Methods
-public:
-
-	internal_t __evaluate ( unsigned int i ) const {
-		return m_scalar * m_value[i];
-	}
-
 // Operators
 public:
 
@@ -311,23 +318,23 @@ public:
 
 
 template<typename L, typename R>
-inline const sum<L,R> operator + ( const L& lhs, const R& rhs ) {
-	return sum<L,R>( lhs, rhs );
+inline const sum<container<L>,container<R>> operator + ( const L& lhs, const R& rhs ) {
+	return sum<container<L>,container<R>>( lhs, rhs );
 }
 
 template<typename L, typename R>
-inline const difference<L,R> operator - ( const L& lhs, const R& rhs ) {
-	return difference<L,R>( lhs, rhs );
+inline const difference<container<L>,container<R>> operator - ( const L& lhs, const R& rhs ) {
+	return difference<container<L>,container<R>>( lhs, rhs );
 }
 
 template<typename T>
-inline const product<T> operator * ( const float scalar, const T& value ) {
-	return product<T>( scalar, value );
+inline const product<container<T>> operator * ( const float scalar, const T& value ) {
+	return product<container<T>>( scalar, value );
 }
 
 template<typename T>
-inline const product<T> operator * ( const T& value, const float scalar ) {
-	return product<T>( scalar, value );
+inline const product<container<T>> operator * ( const T& value, const float scalar ) {
+	return product<container<T>>( scalar, value );
 }
 
 

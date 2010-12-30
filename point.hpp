@@ -19,34 +19,33 @@
 #ifndef EUBLIB_POINT_HPP
 #define EUBLIB_POINT_HPP
 
-#include <boost/type_traits/is_integral.hpp>
+#include <boost/type_traits/is_arithmetic.hpp>
 #include <boost/type_traits/is_floating_point.hpp>
+#include <boost/type_traits/is_base_of.hpp>
 #include <array>
 
 #include "euclib_math.hpp"
 
 namespace euclib {
 
-template<typename T, unsigned int D>
+template<typename T, unsigned int D, typename INTERNAL = float>
 class point_base {
 // Typedefs
 protected:
 
 	typedef std::numeric_limits<T> limit_t;
+	typedef INTERNAL               internal_t;
 
-	// This class can only be used with scalar types
-	//   or types with a specialization of numeric_limits
-	static_assert( boost::is_integral<T>::value || boost::is_floating_point<T>::value,
-	               "T must be an integral type" );
+	// This class can only be used with integral or floating point types
+	static_assert( boost::is_arithmetic<T>::value, "T must be an integral or floating point type" );
 	static_assert( D != 0, "cannot have 0-dimensional object" );
+	static_assert( boost::is_floating_point<internal_t>::value, "INTERNAL must be floating point" );
 
 
 // Variables
 protected:
 
 	std::array<T,D> m_data;
-
-	static T invalid; // holds either limit_t::infinity or limit_t::max
 
 
 // Constructors
@@ -55,6 +54,7 @@ protected: // cannot construct directly
 	point_base( ) { }
 	point_base( const point_base<T,D>& pt ) { *this = pt; }
 	point_base( point_base<T,D>&& pt ) { *this = std::move( pt ); }
+	// For use when constructing points from expressions
 	template<typename Expr>
 	point_base( const Expr& expr ) { evaluate( expr ); }
 	// Limit number of arguments to size of point
@@ -66,34 +66,13 @@ protected: // cannot construct directly
 		fill( 0, value, values... );
 	}
 
-
 // Methods
 public:
-
-	static point_base<T,D> null( ) {
-		static point_base<T,D> null = point_base<T,D>{ invalid, invalid };
-		return null;
-	}
 
 	unsigned int dimension( ) const { return D; }
 
 
 protected:
-
-	inline void check_valid( ) {
-		for( unsigned int i = 0; i < D; ++i ) {
-			if( m_data[i] == invalid ) {
-				set_null( );
-				return;
-			}
-		}
-	}
-
-	inline void set_null( ) {
-		for( unsigned int i = 0; i < D; ++i ) {
-			m_data[i] = invalid;
-		}
-	}
 
 	template<typename ... Args>
 	inline void fill( unsigned int i, T value, Args... values ) {
@@ -109,12 +88,11 @@ protected:
 
 	template<typename Expr>
 	inline void evaluate( const Expr& expr ) {
+		static_assert( boost::is_base_of<expression,Expr>::value,
+		               "invalid assignment or construction" );
+
 		for( unsigned int i = 0; i < D; ++i ) {
-			m_data[i] = expr.__evaluate( i );
-			if( m_data[i] == invalid ) {
-				set_null( );
-				return;
-			}
+			m_data[i] = expr[i];
 		}
 	}
 
@@ -133,9 +111,7 @@ public:
 
 	bool operator == ( const point_base<T,D>& pt ) const {
 		for( unsigned int i = 0; i < D; ++i ) {
-			if( !( (m_data[i] == invalid && pt[i] == invalid) ||
-			       equal( m_data[i], pt[i] ) )
-			  ) {
+			if( !equal( m_data[i], pt[i] ) ) {
 				return false;
 			}
 		}
@@ -148,19 +124,19 @@ public:
 
 	point_base<T,D>& operator = ( const point_base<T,D>& pt ) {
 		m_data = pt.m_data;
-		check_valid( );
 		return *this;
 	}
 
 	point_base<T,D>& operator = ( point_base<T,D>&& pt ) {
 		std::swap( m_data, pt.m_data );
-		check_valid( );
 		return *this;
 	}
 
+	// For use when assigning points from expressions
 	template<typename Expr>
 	point_base<T,D>& operator = ( const Expr& expr ) {
 		evaluate( expr );
+		return *this;
 	}
 
 	template<typename R>
@@ -179,23 +155,55 @@ public:
 		return *this;
 	}
 
-	template<typename R>
-	point_base<T,D>& operator *= ( R value ) {
+	point_base<T,D>& operator *= ( internal_t value ) {
 		for( unsigned int i = 0; i < D; ++i ) {
 			m_data[i] *= static_cast<T>(value);
 		}
 		return *this;
 	}
 
-}; // End class point_base<T,D>
+}; // End class point_base<T,D,INTERNAL>
 
 
-template<typename T, unsigned int D>
-class point : public point_base<T,D> {
+template<typename T, unsigned int D, typename INTERNAL>
+class container<point_base<T,D,INTERNAL>> {
 // Typedefs
 protected:
 
-	typedef point_base<T,D> base_t;
+	typedef point_base<T,D,INTERNAL> value_t;
+	typedef INTERNAL                 internal_t;
+
+
+// Variables
+private:
+
+	const value_t& m_obj;
+
+
+// Constructor
+public:
+
+	container( const value_t& obj ) : m_obj( obj ) { }
+
+
+// Methods
+public:
+
+	internal_t operator [] ( unsigned int i ) const {
+		printf( "=== point_base: %u ===\n", i );
+		return m_obj[i];
+	}
+
+}; // End class container<point_base<T,D,INTERNAL>>
+
+
+template<typename T, unsigned int D, typename INTERNAL = float>
+class point : public point_base<T,D,INTERNAL> {
+// Typedefs
+protected:
+
+	typedef point_base<T,D,INTERNAL> base_t;
+	typedef INTERNAL                 internal_t;
 
 
 // Constructors
@@ -221,24 +229,16 @@ public:
 		return sum;
 	}
 
-
-// Operators
-public:
-
-	T& operator [] ( unsigned int i ) {
-		assert( i < D );
-		return base_t::m_data[i];
-	}
-
 }; // End class point<T,D>
 
 
-template<typename T>
-class point<T,2> : public point_base<T,2> {
+template<typename T, typename INTERNAL>
+class point<T,2,INTERNAL> : public point_base<T,2,INTERNAL> {
 // Typedefs
 protected:
 
-	typedef point_base<T,2> base_t;
+	typedef point_base<T,2,INTERNAL> base_t;
+	typedef INTERNAL                 internal_t;
 
 
 // Constructors
@@ -274,12 +274,13 @@ public:
 }; // End class point<T,2>
 
 
-template<typename T>
-class point<T,3> : public point_base<T,3> {
+template<typename T, typename INTERNAL>
+class point<T,3,INTERNAL> : public point_base<T,3,INTERNAL> {
 // Typedefs
 protected:
 
-	typedef point_base<T,3> base_t;
+	typedef point_base<T,3,INTERNAL> base_t;
+	typedef INTERNAL                 internal_t;
 
 
 // Constructors
@@ -327,12 +328,13 @@ public:
 }; // End class point<T,3>
 
 
-template<typename T>
-class point<T,4> : public point_base<T,4> {
+template<typename T, typename INTERNAL>
+class point<T,4,INTERNAL> : public point_base<T,4,INTERNAL> {
 // Typedefs
 protected:
 
-	typedef point_base<T,4> base_t;
+	typedef point_base<T,4,INTERNAL> base_t;
+	typedef INTERNAL                 internal_t;
 
 
 // Constructors
@@ -374,10 +376,10 @@ public:
 
 
 // Various typedefs to make usage easier
-typedef point<int,2>           point2i;
+typedef point<int,2>           point2i;//
 typedef point<float,2>         point2f;
 typedef point<double,2>        point2d;
-typedef point<unsigned int,2>  point2u;
+typedef point<unsigned int,2>  point2u;//
 
 typedef point<int,3>           point3i;
 typedef point<float,3>         point3f;
@@ -389,14 +391,6 @@ typedef point<float,4>         point4f;
 typedef point<double,4>        point4d;
 typedef point<unsigned int,4>  point4u;
 
-
-// Initialize invalid with either infinity or max
-template<typename T, unsigned int D>
-T point_base<T,D>::invalid = ( point_base<T,D>::limit_t::has_infinity ?
-                                   point_base<T,D>::limit_t::infinity( )
-                             : // else
-                                   point_base<T,D>::limit_t::max( )
-                             );
 
 }  // End namespace euclib
 

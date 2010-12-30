@@ -1,5 +1,4 @@
-/*	line.hpp  v 0.4.0.10.1222
- *
+/*
  *	Copyright (C) 2010 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
@@ -20,7 +19,7 @@
 #ifndef EUBLIB_LINE_HPP
 #define EUBLIB_LINE_HPP
 
-#include <boost/type_traits/is_same.hpp>
+#include <boost/type_traits/is_floating_point.hpp>
 #include "euclib_math.hpp"
 #include "point.hpp"
 #include "direction.hpp"
@@ -41,8 +40,7 @@ protected:
 	static_assert( limit_t::is_specialized,
 	               "type not compatible with std::numeric_limits" );
 	static_assert( D != 0, "cannot have 0-dimensional object" );
-	static_assert( boost::is_same<internal_t, float>::value ||
-	               boost::is_same<internal_t, double>::value,
+	static_assert( boost::is_floating_point<internal_t>::value,
 	               "INTERNAL must be float or double" );
 
 
@@ -51,8 +49,6 @@ protected:
 
 	point<T,D>              m_point;      // line defined as passing through a point
 	direction<internal_t,D> m_direction;  //   in a direction
-
-	static T invalid; // holds either limit_t::infinity or limit_t::max
 
 
 // Constructors
@@ -67,7 +63,6 @@ protected: // cannot construct directly
 		                  static_cast<internal_t>( pt2.x( ) - pt1.x( ) ),
 		                  static_cast<internal_t>( pt2.y( ) - pt1.y( ) )
 		              };
-		check_valid( );
 	}
 	template<typename R>
 	line_base( const point<T,D>& pt, const direction<R,D>& dir ) :
@@ -75,40 +70,14 @@ protected: // cannot construct directly
 		for( unsigned int i = 0; i < D; ++i ) {
 			m_direction = static_cast<internal_t>( dir[i] );
 		}
-		check_valid( );
 	}
 
 
 // Methods
 public:
 
-	// Returns a null line, defined as point2<T>::null --> point2<T>::null
-	static line_base<T,D> null( ) {
-		static line_base<T,D> null = line_base<T,D>{
-		                                 point<T,D>::null( ),
-		                                 direction<internal_t,D>::null( )
-		                             };
-		return null;
-	}
-
 	point<T,D>          base_point( ) const     { return m_point; }
 	direction<internal_t,D> base_direction( ) const { return m_direction; }
-
-
-protected:
-
-	inline void check_valid( ) {
-		if( m_point == point<T,D>::null( ) ||
-		    m_direction == direction<internal_t,D>::null( )
-		  ) {
-			set_null( );
-		}
-	}
-
-	inline void set_null( ) {
-		m_point = point<T,D>::null( );
-		m_direction = direction<internal_t,D>::null( );
-	}
 
 
 // Operators
@@ -117,14 +86,12 @@ public:
 	line_base<T,D>& operator = ( const line_base<T,D>& line ) {
 		m_point = line.m_point;
 		m_direction = line.m_direction;
-		check_valid( );
 		return *this;
 	}
 
 	line_base<T,D>& operator = ( line_base<T,D>&& line ) {
 		std::swap( m_point, line.m_point );
 		std::swap( m_direction, line.m_direction );
-		check_valid( );
 		return *this;
 	}
 
@@ -255,13 +222,6 @@ typedef line<float,2>         line2f;
 typedef line<double,2>        line2d;
 typedef line<unsigned int,2>  line2u;
 
-// Initialize invalid with either infinity or max
-template<typename T, unsigned int D, typename INTERNAL>
-T line_base<T,D,INTERNAL>::invalid = ( line<T,D,INTERNAL>::limit_t::has_infinity ?
-                                           line<T,D,INTERNAL>::limit_t::infinity( )
-                                     : // else
-                                           line<T,D,INTERNAL>::limit_t::max( )
-                                     );
 
 }  // End namespace euclib
 

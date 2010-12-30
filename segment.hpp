@@ -1,5 +1,4 @@
-/*	line.hpp  v 0.1.1.10.1122
- *
+/*
  *	Copyright (C) 2010 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
@@ -56,8 +55,8 @@ public:
 	// positive starts from end of direction
 	// negative starts from base of direction
 	point<T,D> extrapolate( internal_t distance ) const {
-		double t = distance / base_t::m_direction.length( );
-		if( greater_than( distance, static_cast<internal_t>(0) ) ) { distance += static_cast<internal_t>(1); }
+		internal_t t = distance / base_t::m_direction.length( );
+		if( greater_than( distance, static_cast<internal_t>(0) ) ) { t += static_cast<internal_t>(1); }
 		point<T,D> result = base_t::m_point + base_t::m_direction * t;
 		return result;
 	}

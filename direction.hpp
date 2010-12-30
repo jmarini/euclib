@@ -1,5 +1,4 @@
-/*	direction.hpp  v 0.1.0.10.1221
- *
+/*
  *	Copyright (C) 2010 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
@@ -20,7 +19,7 @@
 #ifndef EUBLIB_DIRECTION_HPP
 #define EUBLIB_DIRECTION_HPP
 
-#include <boost/type_traits/is_same.hpp>
+#include <boost/type_traits/is_floating_point.hpp>
 #include "euclib_math.hpp"
 #include "point.hpp"
 
@@ -30,15 +29,12 @@ template<typename T, unsigned int D, typename INTERNAL>
 class line_base;
 
 template<typename T, unsigned int D, typename INTERNAL = float>
-class direction : public point_base<T,D> {
+class direction : public point_base<T,D,INTERNAL> {
 // Typedefs
 protected:
 
-	typedef point_base<T,D>                 base_t;
-	typedef INTERNAL                        internal_t;
-	static_assert( boost::is_same<internal_t, float>::value ||
-	               boost::is_same<internal_t, double>::value,
-	               "INTERNAL must be float or double" );
+	typedef point_base<T,D,INTERNAL> base_t;
+	typedef INTERNAL                 internal_t;
 
 
 // Constructors
