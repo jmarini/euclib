@@ -76,9 +76,20 @@ namespace euclib {
 
 template<typename T>
 inline bool equal( T lhs, T rhs ) {
-	return lhs == rhs ||
-	       std::abs( lhs - rhs ) <= std::numeric_limits<T>::epsilon( );
+	return lhs == rhs;
 }
+
+	template< >
+	inline bool equal<float>( float lhs, float rhs ) {
+		return lhs == rhs || std::abs( lhs - rhs ) <= std::numeric_limits<float>::epsilon( ) *
+		                                              ( std::abs(lhs) + std::abs(rhs) + 1.f );
+	}
+
+	template< >
+	inline bool equal<double>( double lhs, double rhs ) {
+		return lhs == rhs || std::abs( lhs - rhs ) <= std::numeric_limits<double>::epsilon( ) *
+		                                              ( std::abs(lhs) + std::abs(rhs) + 1.0 );
+	}
 
 template<typename T>
 inline bool not_equal( T lhs, T rhs ) {
@@ -87,8 +98,20 @@ inline bool not_equal( T lhs, T rhs ) {
 
 template<typename T>
 inline bool less_than( T lhs, T rhs ) {
-	return rhs - lhs > std::numeric_limits<T>::epsilon( );
+	return lhs < rhs;
 }
+
+	template< >
+	inline bool less_than<float>( float lhs, float rhs ) {
+		return rhs - lhs > std::numeric_limits<float>::epsilon( ) *
+		                   ( std::abs(lhs) + std::abs(rhs) + 1.f );
+	}
+
+	template< >
+	inline bool less_than<double>( double lhs, double rhs ) {
+		return rhs - lhs > std::numeric_limits<double>::epsilon( ) *
+		                   ( std::abs(lhs) + std::abs(rhs) + 1.0 );
+	}
 
 template<typename T>
 inline bool greater_than( T lhs, T rhs ) {
@@ -107,10 +130,33 @@ inline bool greater_equal( T lhs, T rhs ) {
 
 template<typename T>
 void round_nearest( double& value ) {
-	if( std::numeric_limits<T>::is_integer ) { // make sure it rounds to nearest
+	if( std::numeric_limits<T>::is_integer ) { // make sure it rounds to nearest when cast to T
 		switch( std::numeric_limits<T>::round_style ) {
 			case 0:  // round to 0
-				if( less_than( value, 0. ) ) { value -= 0.5; }
+				if( less_than( value, 0.0 ) ) { value -= 0.5; }
+				else { value += 0.5; }
+				break;
+			case 2:  // round to inf
+				value -= 0.5;
+				break;
+			case 3:  // round to -inf
+				value += 0.5;
+				break;
+			case -1: // indeterminate
+			default:
+				assert(false);
+			case 1:  // round toward nearest
+				break;
+		}
+	}
+}
+
+template<typename T>
+void round_nearest( float& value ) {
+	if( std::numeric_limits<T>::is_integer ) { // make sure it rounds to nearest when cast to T
+		switch( std::numeric_limits<T>::round_style ) {
+			case 0:  // round to 0
+				if( less_than( value, 0.f ) ) { value -= 0.5; }
 				else { value += 0.5; }
 				break;
 			case 2:  // round to inf

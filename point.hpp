@@ -51,7 +51,7 @@ protected:
 // Constructors
 protected: // cannot construct directly
 
-	point_base( ) { set_null( ); }
+	point_base( ) { }
 	point_base( const point_base<T,D>& pt ) { *this = pt; }
 	point_base( point_base<T,D>& pt ) { *this = std::move( pt ); }
 	// Limit number of arguments to size of point
@@ -141,24 +141,6 @@ public:
 	}
 
 	template<typename R>
-	point_base<T,D> operator + ( const point_base<R,D>& pt ) const {
-		point_base<T,D> result;
-		for( unsigned int i = 0; i < D; ++i ) {
-			result.m_data[i] = m_data[i] + static_cast<T>(pt[i]);
-		}
-		return result;
-	}
-
-	template<typename R>
-	point_base<T,D> operator + ( R value ) const {
-		point_base<T,D> result;
-		for( unsigned int i = 0; i < D; ++i ) {
-			result.m_data[i] = m_data[i] + static_cast<T>(value);
-		}
-		return result;
-	}
-
-	template<typename R>
 	point_base<T,D>& operator += ( const point_base<R,D>& pt ) {
 		for( unsigned int i = 0; i < D; ++i ) {
 			m_data[i] += static_cast<T>(pt[i]);
@@ -175,21 +157,15 @@ public:
 	}
 
 	template<typename R>
-	point_base<T,D> operator - ( const point_base<R,D>& pt ) const {
-		point_base<T,D> result;
-		for( unsigned int i = 0; i < D; ++i ) {
-			result.m_data[i] = m_data[i] - static_cast<T>(pt[i]);
-		}
-		return result;
+	point_base<T,D> operator + ( const point_base<R,D>& pt ) const {
+		point_base<T,D> result( *this );
+		return result += pt;
 	}
 
 	template<typename R>
-	point_base<T,D> operator - ( R value ) const {
-		point_base<T,D> result;
-		for( unsigned int i = 0; i < D; ++i ) {
-			result.m_data[i] = m_data[i] - static_cast<T>(value);
-		}
-		return result;
+	point_base<T,D> operator + ( R value ) const {
+		point_base<T,D> result( *this );
+		return result += value;
 	}
 
 	template<typename R>
@@ -209,21 +185,15 @@ public:
 	}
 
 	template<typename R>
-	point_base<T,D> operator * ( const point_base<R,D>& pt ) const {
-		point_base<T,D> result;
-		for( unsigned int i = 0; i < D; ++i ) {
-			result.m_data[i] = m_data[i] * static_cast<T>(pt[i]);
-		}
-		return result;
+	point_base<T,D> operator - ( const point_base<R,D>& pt ) const {
+		point_base<T,D> result( *this );
+		return result += pt;
 	}
 
 	template<typename R>
-	point_base<T,D> operator * ( R value ) const {
-		point_base<T,D> result;
-		for( unsigned int i = 0; i < D; ++i ) {
-			result.m_data[i] = m_data[i] * static_cast<T>(value);
-		}
-		return result;
+	point_base<T,D> operator - ( R value ) const {
+		point_base<T,D> result( *this );
+		return result += value;
 	}
 
 	template<typename R>
@@ -240,6 +210,18 @@ public:
 			m_data[i] *= static_cast<T>(value);
 		}
 		return *this;
+	}
+
+	template<typename R>
+	point_base<T,D> operator * ( const point_base<R,D>& pt ) const {
+		point_base<T,D> result( *this );
+		return result += pt;
+	}
+
+	template<typename R>
+	point_base<T,D> operator * ( R value ) const {
+		point_base<T,D> result( *this );
+		return result += value;
 	}
 
 }; // End class point_base<T,D>
