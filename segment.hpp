@@ -20,13 +20,51 @@
 #ifndef EUBLIB_SEGMENT_HPP
 #define EUBLIB_SEGMENT_HPP
 
-#include <ostream>
-#include <limits>
-#include <complex>
-#include "point.hpp"
+#include "euclib_math.hpp"
+#include "line.hpp"
 
 namespace euclib {
 
+template<typename T, unsigned int D, typename INTERNAL = float>
+class segment : public line_base<T,D,INTERNAL> {
+// Typedefs
+protected:
+
+	typedef line_base<T,2,INTERNAL>         base_t;
+	typedef INTERNAL                        internal_t;
+	typedef std::numeric_limits<T>          limit_t;
+	typedef std::numeric_limits<internal_t> internal_limit_t;
+
+
+// Constructors
+public:
+
+	segment( ) : base_t( ) { }
+	segment( const base_t& line ) : base_t( line ) { }
+	segment( base_t&& line ) : base_t( std::forward<base_t>( line ) ) { }
+	segment( const point<T,D>& pt1, const point<T,D>& pt2 ) : base_t( pt1, pt2 ) { }
+	template<typename R>
+	segment( const point<T,D>& pt, const direction<R,D>& dir ) : base_t( pt, dir ) { }
+
+
+// Methods
+public:
+
+	inline internal_t length( ) const { return base_t::m_direction.length( ); }
+	inline T length_sq( ) const { return base_t::m_direction.length_sq( ); }
+
+	// positive starts from end of direction
+	// negative starts from base of direction
+	point<T,D> extrapolate( internal_t distance ) const {
+		double t = distance / base_t::m_direction.length( );
+		if( greater_than( distance, static_cast<internal_t>(0) ) ) { distance += static_cast<internal_t>(1); }
+		point<T,D> result = base_t::m_point + base_t::m_direction * t;
+		return result;
+	}
+
+}; // End class segment<T,D,INTERNAL>
+
+/*
 template<typename T>
 class segment2 {
 // Typdefs
@@ -103,7 +141,7 @@ public:
 		if( equal(pt1.x, pt2.x) ) {
 			return float_limit_t::infinity( );
 		}
-		
+
 		return static_cast<float>(pt2.y-pt1.y) / static_cast<float>(pt2.x-pt1.x);
 	}
 
@@ -118,7 +156,7 @@ public:
 	//             sign determines which side of the segment to move from.
 	point2<T> extrapolate( float distance ) {
 		if( equal( distance, 0.f ) ) { return pt1; }
-		
+
 		float slp = slope( );
 		// vertical line
 		if( slp == float_limit_t::infinity( ) ) {
@@ -161,11 +199,11 @@ public:
 		if( slope( ) == float_limit_t::infinity( ) ) {
 			return point2<T>::null( );
 		}
-		
+
 		T del_x = value;
 		float del_y = slope( ) * static_cast<float>(del_x);
 		if( limit_t::is_integer ) { del_y += 0.5f; } // reduce rounding errors
-		
+
 		if( less_than( value, 0 ) ) {
 			return point2<T>{ pt1.x + del_x, pt1.y + static_cast<T>(del_y) };
 		}
@@ -212,7 +250,7 @@ public:
 		else if( greater_equal( std::abs( distance ), length( ) ) ) {
 			return ( greater_than( distance, 0.f ) ? pt2 : pt1 );
 		}
-		
+
 		float slp = slope( );
 		// vertical line
 		if( slp == float_limit_t::infinity( ) ) {
@@ -252,16 +290,16 @@ public:
 		else if( greater_equal( std::abs(value), width( ) ) ) {
 			return ( greater_than( value, 0 ) ? pt2 : pt1 );
 		}
-		
+
 		float slp = slope( );
 		// vertical line
 		if( slp == float_limit_t::infinity( ) ) { return point2<T>::null( ); }
 
 		T del_x = value;
 		float del_y = slp * static_cast<float>(del_x);
-		
+
 		if( limit_t::is_integer ) { del_y += 0.5f; } // reduce rounding errors
-		
+
 		if( less_than( value, 0 ) ) {
 			return point2<T>( pt1.x - del_x, pt1.y - static_cast<T>(del_y) );
 		}
@@ -277,7 +315,7 @@ public:
 		else if( greater_equal( std::abs( value ), height( ) ) ) {
 			return ( greater( value, 0 ) ? pt2 : pt1 );
 		}
-		
+
 		float slp = slope( );
 		// horizontal line
 		if( equal( slp, 0.f ) ) { return point2<T>::null( ); }
@@ -289,12 +327,12 @@ public:
 				return pt2;
 			}
 		}
-		
+
 		T del_y = value;
 		float del_x = static_cast<float>(del_y) / slp;
-		
+
 		if( limit_t::is_integer ) { del_x += 0.5f; } // reduce rounding errors
-		
+
 		if ( less_than( value, 0 ) ) {
 			return point2<T>( pt1.x - static_cast<T>(del_x), pt1.y - del_y );
 		}
@@ -313,7 +351,7 @@ private:
 			set_null( );
 		}
 	}
-	
+
 	inline void set_null( ) {
 		pt1 = pt2 = point2<T>::null( );
 	}
@@ -328,24 +366,24 @@ public:
 		check_valid( );
 		return *this;
 	}
-	
+
 	segment2<T>& operator = ( segment2<T>&& line ) {
 		std::swap( pt1, line.pt1 );
 		std::swap( pt2, line.pt2 );
 		check_valid( );
 		return *this;
 	}
-	
+
 	// Checks either orientation
 	bool operator == ( const segment2<T>& line ) const {
 		return ( pt1 == line.pt1 && pt2 == line.pt2 ) ||
 		       ( pt1 == line.pt2 && pt2 == line.pt1 );
 	}
-	
+
 	bool operator != ( const segment2<T>& line ) const {
 		return !(*this == line);
 	}
-	
+
 	friend std::ostream& operator << ( std::ostream& stream,
 	                                   const segment2<T>& segment ) {
 		#ifdef GNUPLOT
@@ -357,18 +395,11 @@ public:
 
 
 }; // End class segment2<T>
-
-typedef segment2<int>           segment2i;
-typedef segment2<float>         segment2f;
-typedef segment2<unsigned int>  segment2u;
-
-// Initialize invalid with either infinity or max
-template<typename T>
-T segment2<T>::invalid = ( segment2<T>::limit_t::has_infinity ?
-                               segment2<T>::limit_t::infinity( )
-                           : // else
-                               segment2<T>::limit_t::max( )
-                         );
+*/
+typedef segment<int,2>           segment2i;
+typedef segment<float,2>         segment2f;
+typedef segment<double,2>        segment2d;
+typedef segment<unsigned int,2>  segment2u;
 
 }  // End namespace euclib
 

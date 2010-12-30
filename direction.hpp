@@ -20,115 +20,116 @@
 #ifndef EUBLIB_DIRECTION_HPP
 #define EUBLIB_DIRECTION_HPP
 
+#include <boost/type_traits/is_same.hpp>
 #include "euclib_math.hpp"
 #include "point.hpp"
 
 namespace euclib {
 
-template<typename T, unsigned int D>
+template<typename T, unsigned int D, typename INTERNAL>
 class line_base;
 
-template<typename T, unsigned int D>
+template<typename T, unsigned int D, typename INTERNAL = float>
 class direction : public point_base<T,D> {
 // Typedefs
 protected:
 
-	typedef point_base<T,D>             base_t;
-	typedef std::numeric_limits<double> double_limit_t;
-
-
-// Variables
-private:
-	double m_length;
+	typedef point_base<T,D>                 base_t;
+	typedef INTERNAL                        internal_t;
+	static_assert( boost::is_same<internal_t, float>::value ||
+	               boost::is_same<internal_t, double>::value,
+	               "INTERNAL must be float or double" );
 
 
 // Constructors
 public:
 
-	direction( ) : base_t( ) { m_length = double_limit_t::infinity( ); }
-	direction( const base_t& pt ) : base_t( pt ) { calc_length( ); }
-	direction( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { calc_length( ); }
+	direction( ) : base_t( ) { }
+	direction( const base_t& pt ) : base_t( pt ) { }
+	direction( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
 	template<typename ... Args>
-	direction( T value, Args... values ) : base_t( value, values... ) { calc_length( ); }
+	direction( T value, Args... values ) : base_t( value, values... ) { }
 
 
 // Methods
 public:
 
-	direction<double,D> normalize( ) const {
-		direction<double,D> result;
+	direction<internal_t,D,internal_t> normalize( ) const {
+		direction<internal_t,D> result;
+		internal_t length = length( );
 
 		for( unsigned int i = 0; i < D; ++i ) {
-			result[i] = static_cast<double>(base_t::m_data[i]) / m_length;
+			result[i] = static_cast<internal_t>(base_t::m_data[i]) / length;
 		}
 		return result;
 	}
 
-	double length( ) const { return m_length; }
+	inline internal_t length( ) const {
+		return static_cast<internal_t>( sqrt( length_sq( ) ) );
+	}
 
-	void calc_length( ) {
+	inline T length_sq( ) const {
 		T length = 0;
 		for( unsigned int i = 0; i < D; ++i ) {
 			length += base_t::m_data[i] * base_t::m_data[i];
+			assert( length > base_t::m_data[i] ); // quick code to catch some overflows
 		}
-		m_length = sqrt( static_cast<double>(length) );
+		return length;
 	}
 
-}; // End class direction<T,D>
+}; // End class direction<T,D,INTERNAL>
 
 
-template<typename T>
-class direction<T,2> : public point_base<T,2> {
+template<typename T, typename INTERNAL>
+class direction<T,2,INTERNAL> : public point_base<T,2> {
 // Typedefs
 protected:
 
-	typedef point_base<T,2>             base_t;
-	typedef std::numeric_limits<double> double_limit_t;
-
-// Variables
-private:
-	double m_length;
+	typedef point_base<T,2> base_t;
+	typedef INTERNAL        internal_t;
 
 
 // Constructors
 public:
 
-	direction( ) : base_t( ) { m_length = double_limit_t::infinity( ); }
-	direction( const base_t& pt ) : base_t( pt ) { calc_length( ); }
-	direction( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { calc_length( ); }
+	direction( ) : base_t( ) { }
+	direction( const base_t& pt ) : base_t( pt ) { }
+	direction( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
 	template<typename ... Args>
-	direction( T value, Args... values ) : base_t( value, values... ) { calc_length( ); }
+	direction( T value, Args... values ) : base_t( value, values... ) { }
 
 
 // Methods
 public:
 
-	direction<double,2> normalize( ) const {
-		direction<double,2> result {
-		    static_cast<double>(base_t::m_data[0]) / m_length,
-		    static_cast<double>(base_t::m_data[1]) / m_length
+	direction<internal_t,2> normalize( ) const {
+		internal_t length = length( );
+		return direction<internal_t,2> {
+		    static_cast<internal_t>(base_t::m_data[0]) / length,
+		    static_cast<internal_t>(base_t::m_data[1]) / length
 		};
-		return result;
 	}
 
-	double length( ) const { return m_length; }
+	inline internal_t length( ) const {
+		return static_cast<internal_t>( sqrt( length_sq( ) ) );
+	}
+
+	inline T length_sq( ) const {
+		return base_t::m_data[0] * base_t::m_data[0] + base_t::m_data[1] * base_t::m_data[1];
+	}
 
 	T   x( ) const { return base_t::m_data[0]; }
 	T   y( ) const { return base_t::m_data[1]; }
-
-	void calc_length( ) {
-		T length = base_t::m_data[0] * base_t::m_data[0] + base_t::m_data[1] * base_t::m_data[1];
-		m_length = sqrt( static_cast<double>(length) );
-	}
 
 
 // Operators
 public:
 
 	bool operator == ( const direction<T,2>& pt ) const {
-		double slope1, slope2;
-		slope1 = static_cast<double>(base_t::m_data[0]) / static_cast<double>(base_t::m_data[1]);
-		slope2 = static_cast<double>(pt[0]) / static_cast<double>(pt[1]);
+		internal_t slope1, slope2;
+		slope1 = static_cast<internal_t>(base_t::m_data[0]) /
+		         static_cast<internal_t>(base_t::m_data[1]);
+		slope2 = static_cast<internal_t>(pt[0]) / static_cast<internal_t>(pt[1]);
 		return equal( slope1, slope2 );
 	}
 
@@ -139,118 +140,103 @@ public:
 }; // End class direction<T,2>
 
 
-template<typename T>
-class direction<T,3> : public point_base<T,3> {
+template<typename T, typename INTERNAL>
+class direction<T,3,INTERNAL> : public point_base<T,3> {
 // Typedefs
 protected:
 
-	typedef point_base<T,3>             base_t;
-	typedef std::numeric_limits<double> double_limit_t;
-
-
-// Variables
-private:
-	double m_length;
+	typedef point_base<T,3> base_t;
+	typedef INTERNAL        internal_t;
 
 
 // Constructors
 public:
 
-	direction( ) : base_t( ) { m_length = double_limit_t::infinity( ); }
-	direction( const base_t& pt ) : base_t( pt ) { calc_length( ); }
-	direction( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { calc_length( ); }
+	direction( ) : base_t( ) { }
+	direction( const base_t& pt ) : base_t( pt ) { }
+	direction( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
 	template<typename ... Args>
-	direction( T value, Args... values ) : base_t( value, values... ) { calc_length( ); }
+	direction( T value, Args... values ) : base_t( value, values... ) { }
 
 
 // Methods
 public:
 
-	direction<double,3> normalize( ) const {
-		direction<double,3> result {
-		    static_cast<double>(base_t::m_data[0]) / m_length,
-		    static_cast<double>(base_t::m_data[1]) / m_length,
-		    static_cast<double>(base_t::m_data[2]) / m_length
+	direction<internal_t,3> normalize( ) const {
+		internal_t length = length( );
+		return direction<internal_t,3> {
+		    static_cast<internal_t>(base_t::m_data[0]) / length,
+		    static_cast<internal_t>(base_t::m_data[1]) / length,
+		    static_cast<internal_t>(base_t::m_data[2]) / length
 		};
-		return result;
 	}
 
-	double length( ) const { return m_length; }
+	inline internal_t length( ) const {
+		return static_cast<internal_t>( sqrt( length_sq( ) ) );
+	}
 
-	T&  x( ) { return base_t::m_data[0]; }
-	T&  y( ) { return base_t::m_data[1]; }
-	T&  z( ) { return base_t::m_data[2]; }
+	inline T length_sq( ) const {
+		return base_t::m_data[0] * base_t::m_data[0] +
+		       base_t::m_data[1] * base_t::m_data[1] +
+		       base_t::m_data[2] * base_t::m_data[2];
+	}
+
 	T   x( ) const { return base_t::m_data[0]; }
 	T   y( ) const { return base_t::m_data[1]; }
 	T   z( ) const { return base_t::m_data[2]; }
 
-	void calc_length( ) {
-		T length = base_t::m_data[0] * base_t::m_data[0] +
-		           base_t::m_data[1] * base_t::m_data[1] +
-		           base_t::m_data[2] * base_t::m_data[2];
-		m_length = sqrt( static_cast<double>(length) );
-	}
-
-}; // End class direction<T,3>
+}; // End class direction<T,3,INTERNAL>
 
 
-template<typename T>
-class direction<T,4> : public point_base<T,4> {
+template<typename T, typename INTERNAL>
+class direction<T,4,INTERNAL> : public point_base<T,4> {
 // Typedefs
 protected:
 
-	typedef point_base<T,4>             base_t;
-	typedef std::numeric_limits<double> double_limit_t;
-
-
-// Variables
-private:
-	double m_length;
+	typedef point_base<T,4> base_t;
+	typedef INTERNAL        internal_t;
 
 
 // Constructors
 public:
 
-	direction( ) : base_t( ) { m_length = double_limit_t::infinity( ); }
-	direction( const base_t& pt ) : base_t( pt ) { calc_length( ); }
-	direction( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { calc_length( ); }
+	direction( ) : base_t( ) { }
+	direction( const base_t& pt ) : base_t( pt ) { }
+	direction( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
 	template<typename ... Args>
-	direction( T value, Args... values ) : base_t( value, values... ) { calc_length( ); }
+	direction( T value, Args... values ) : base_t( value, values... ) { }
 
 
 // Methods
 public:
 
-	direction<double,4> normalize( ) const {
-		direction<double,4> result {
-		    static_cast<double>(base_t::m_data[0]) / m_length,
-		    static_cast<double>(base_t::m_data[1]) / m_length,
-		    static_cast<double>(base_t::m_data[2]) / m_length,
-		    static_cast<double>(base_t::m_data[3]) / m_length
+	direction<internal_t,4> normalize( ) const {
+		internal_t length = length( );
+		return direction<internal_t,4> {
+		    static_cast<internal_t>(base_t::m_data[0]) / length,
+		    static_cast<internal_t>(base_t::m_data[1]) / length,
+		    static_cast<internal_t>(base_t::m_data[2]) / length,
+		    static_cast<internal_t>(base_t::m_data[3]) / length
 		};
-		return result;
 	}
 
-	double length( ) const { return m_length; }
+	inline internal_t length( ) const {
+		return static_cast<internal_t>( sqrt( length_sq( ) ) );
+	}
 
-	T&  x( ) { return base_t::m_data[0]; }
-	T&  y( ) { return base_t::m_data[1]; }
-	T&  z( ) { return base_t::m_data[2]; }
-	T&  w( ) { return base_t::m_data[3]; }
+	inline T length_sq( ) const {
+		return base_t::m_data[0] * base_t::m_data[0] +
+		       base_t::m_data[1] * base_t::m_data[1] +
+		       base_t::m_data[2] * base_t::m_data[2] +
+		       base_t::m_data[3] * base_t::m_data[3];
+	}
+
 	T   x( ) const { return base_t::m_data[0]; }
 	T   y( ) const { return base_t::m_data[1]; }
 	T   z( ) const { return base_t::m_data[2]; }
 	T   w( ) const { return base_t::m_data[3]; }
 
-	void calc_length( ) {
-		T length = base_t::m_data[0] * base_t::m_data[0] +
-		           base_t::m_data[1] * base_t::m_data[1] +
-		           base_t::m_data[2] * base_t::m_data[2] +
-		           base_t::m_data[3] * base_t::m_data[3];
-		m_length = sqrt( static_cast<double>(length) );
-	}
-
-}; // End class direction<T,4>
+}; // End class direction<T,4,INTERNAL>
 
 // Various typedefs to make usage easier
 typedef direction<int,2>           direction2i;
