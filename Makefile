@@ -1,6 +1,7 @@
 CMPL = g++
 FLGS = -Wall -Wextra -pedantic -std=c++0x
 DFLG = -g
+RFLG = -O2
 PROG = test
 PLOT = plot.out
 LIBS = 
@@ -10,7 +11,7 @@ all:
 	$(CMPL) $(FLGS) $(DFLG) -o $(PROG) $(SRCS) $(LIBS)
 	
 release:
-	$(CMPL) $(FLGS) -o $(PROG) $(SRCS) $(LIBS)
+	$(CMPL) $(FLGS) $(RFLG) -o $(PROG) $(SRCS) $(LIBS)
 
 debug:
 	$(CMPL) $(FLGS) $(DFLG) -o $(PROG) $(SRCS) $(LIBS)

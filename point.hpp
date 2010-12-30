@@ -1,5 +1,4 @@
-/*	point.hpp  v 0.9.1.10.1222
- *
+/*
  *	Copyright (C) 2010 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
@@ -20,6 +19,8 @@
 #ifndef EUBLIB_POINT_HPP
 #define EUBLIB_POINT_HPP
 
+#include <boost/type_traits/is_integral.hpp>
+#include <boost/type_traits/is_floating_point.hpp>
 #include <array>
 
 #include "euclib_math.hpp"
@@ -35,8 +36,8 @@ protected:
 
 	// This class can only be used with scalar types
 	//   or types with a specialization of numeric_limits
-	static_assert( limit_t::is_specialized,
-	               "type not compatible with std::numeric_limits" );
+	static_assert( boost::is_integral<T>::value || boost::is_floating_point<T>::value,
+	               "T must be an integral type" );
 	static_assert( D != 0, "cannot have 0-dimensional object" );
 
 
@@ -53,7 +54,9 @@ protected: // cannot construct directly
 
 	point_base( ) { }
 	point_base( const point_base<T,D>& pt ) { *this = pt; }
-	point_base( point_base<T,D>& pt ) { *this = std::move( pt ); }
+	point_base( point_base<T,D>&& pt ) { *this = std::move( pt ); }
+	template<typename Expr>
+	point_base( const Expr& expr ) { evaluate( expr ); }
 	// Limit number of arguments to size of point
 	//   can have fewer, remaining spots filled with 0
 	template<typename ... Args>
@@ -77,7 +80,7 @@ public:
 
 protected:
 
-	void check_valid( ) {
+	inline void check_valid( ) {
 		for( unsigned int i = 0; i < D; ++i ) {
 			if( m_data[i] == invalid ) {
 				set_null( );
@@ -86,14 +89,14 @@ protected:
 		}
 	}
 
-	void set_null( ) {
+	inline void set_null( ) {
 		for( unsigned int i = 0; i < D; ++i ) {
 			m_data[i] = invalid;
 		}
 	}
 
 	template<typename ... Args>
-	void fill( unsigned int i, T value, Args... values ) {
+	inline void fill( unsigned int i, T value, Args... values ) {
 		m_data[i] = value;
 		fill( i + 1, values... );
 	}
@@ -104,11 +107,26 @@ protected:
 		}
 	}
 
+	template<typename Expr>
+	inline void evaluate( const Expr& expr ) {
+		for( unsigned int i = 0; i < D; ++i ) {
+			m_data[i] = expr.__evaluate( i );
+			if( m_data[i] == invalid ) {
+				set_null( );
+				return;
+			}
+		}
+	}
 
 // Operators
 public:
 
 	T operator [] ( unsigned int i ) const {
+		assert( i < D );
+		return m_data[i];
+	}
+
+	T& operator [] ( unsigned int i ) {
 		assert( i < D );
 		return m_data[i];
 	}
@@ -140,32 +158,17 @@ public:
 		return *this;
 	}
 
+	template<typename Expr>
+	point_base<T,D>& operator = ( const Expr& expr ) {
+		evaluate( expr );
+	}
+
 	template<typename R>
 	point_base<T,D>& operator += ( const point_base<R,D>& pt ) {
 		for( unsigned int i = 0; i < D; ++i ) {
 			m_data[i] += static_cast<T>(pt[i]);
 		}
 		return *this;
-	}
-
-	template<typename R>
-	point_base<T,D>& operator += ( R value ) {
-		for( unsigned int i = 0; i < D; ++i ) {
-			m_data[i] += static_cast<T>(value);
-		}
-		return *this;
-	}
-
-	template<typename R>
-	point_base<T,D> operator + ( const point_base<R,D>& pt ) const {
-		point_base<T,D> result( *this );
-		return result += pt;
-	}
-
-	template<typename R>
-	point_base<T,D> operator + ( R value ) const {
-		point_base<T,D> result( *this );
-		return result += value;
 	}
 
 	template<typename R>
@@ -177,51 +180,11 @@ public:
 	}
 
 	template<typename R>
-	point_base<T,D>& operator -= ( R value ) {
-		for( unsigned int i = 0; i < D; ++i ) {
-			m_data[i] -= static_cast<T>(value);
-		}
-		return *this;
-	}
-
-	template<typename R>
-	point_base<T,D> operator - ( const point_base<R,D>& pt ) const {
-		point_base<T,D> result( *this );
-		return result += pt;
-	}
-
-	template<typename R>
-	point_base<T,D> operator - ( R value ) const {
-		point_base<T,D> result( *this );
-		return result += value;
-	}
-
-	template<typename R>
-	point_base<T,D>& operator *= ( const point_base<R,D>& pt ) {
-		for( unsigned int i = 0; i < D; ++i ) {
-			m_data[i] *= static_cast<T>(pt[i]);
-		}
-		return *this;
-	}
-
-	template<typename R>
 	point_base<T,D>& operator *= ( R value ) {
 		for( unsigned int i = 0; i < D; ++i ) {
 			m_data[i] *= static_cast<T>(value);
 		}
 		return *this;
-	}
-
-	template<typename R>
-	point_base<T,D> operator * ( const point_base<R,D>& pt ) const {
-		point_base<T,D> result( *this );
-		return result += pt;
-	}
-
-	template<typename R>
-	point_base<T,D> operator * ( R value ) const {
-		point_base<T,D> result( *this );
-		return result += value;
 	}
 
 }; // End class point_base<T,D>
@@ -241,6 +204,8 @@ public:
 	point( ) : base_t( ) { }
 	point( const base_t& pt ) : base_t( pt ) { }
 	point( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
+	template<typename Expr>
+	point( const Expr& expr ) : base_t( expr ) { }
 	template<typename ... Args>
 	point( T value, Args... values ) : base_t( value, values... ) { }
 
@@ -282,6 +247,8 @@ public:
 	point( ) : base_t( ) { }
 	point( const base_t& pt ) : base_t( pt ) { }
 	point( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
+	template<typename Expr>
+	point( const Expr& expr ) : base_t( expr ) { }
 	point( T x ) : base_t( x ) { }
 	point( T x, T y ) : base_t( x, y ) { }
 
@@ -321,6 +288,8 @@ public:
 	point( ) : base_t( ) { }
 	point( const base_t& pt ) : base_t( pt ) { }
 	point( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
+	template<typename Expr>
+	point( const Expr& expr ) : base_t( expr ) { }
 	point( T x ) : base_t( x ) { }
 	point( T x, T y ) : base_t( x, y ) { }
 	point( T x, T y, T z ) : base_t( x, y, z ) { }
@@ -372,6 +341,8 @@ public:
 	point( ) : base_t( ) { }
 	point( const base_t& pt ) : base_t( pt ) { }
 	point( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
+	template<typename Expr>
+	point( const Expr& expr ) : base_t( expr ) { }
 	point( T x ) : base_t( x ) { }
 	point( T x, T y ) : base_t( x, y ) { }
 	point( T x, T y, T z ) : base_t( x, y, z ) { }

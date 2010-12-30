@@ -1,5 +1,4 @@
-/*	euclib_math.hpp  v 0.1.0.10.1220
- *
+/*
  *	Copyright (C) 2010 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
@@ -26,7 +25,9 @@
 
 namespace euclib {
 
-// Get definitions from math.h or define our own versions
+////////////////////////////////////////
+// Get definitions from math.h
+//   or define our own versions
 
 #ifdef M_PI	// pi
 #	define EUCLIB_PI M_PI
@@ -64,6 +65,8 @@ namespace euclib {
 #	define EUCLIB_2_SQRTPI 1.12837916709551257390
 #endif
 
+
+////////////////////////////////////////
 // some new definitions
 
 #define EUCLIB_PI_180  0.01745329251994329576	// pi/180
@@ -71,6 +74,7 @@ namespace euclib {
 #define EUCLIB_2PI     6.28318530717958647692	// 2*pi
 
 
+////////////////////////////////////////
 // Helper functions for comparisons, because no assumptions
 //   can be made about the exactness of type T
 
@@ -173,6 +177,156 @@ void round_nearest( float& value ) {
 		}
 	}
 }
+
+////////////////////////////////////////
+// Some template trickery to increase
+//   the speed of long vector operations
+//   i.e.  v1 + 3 * ( v2 + v3 )
+//   Adapted from:  J. Blinn, "Optimizing C++ Vector Expressions," in Notation, Notation, Notation.
+//                    San Francisco, Morgan Kaufmann, 2002, pp 237-253
+
+template<typename L_EXPR, typename R_EXPR, typename INTERNAL = float>
+class sum {
+// Typedefs
+protected:
+
+	typedef L_EXPR   left_t;
+	typedef R_EXPR   right_t;
+	typedef INTERNAL internal_t;
+
+
+// Variables
+private:
+
+	left_t  m_lhs;
+	right_t m_rhs;
+
+
+// Constructors
+public:
+
+	sum( const left_t& lhs, const right_t& rhs ) : m_lhs(lhs), m_rhs(rhs) { }
+
+
+
+// Methods
+public:
+
+	internal_t __evaluate ( unsigned int i ) const {
+		return m_lhs[i] + m_rhs[i];
+	}
+
+
+// Operators
+public:
+
+	internal_t operator [] ( unsigned int i ) const {
+		return m_lhs[i] + m_rhs[i];
+	}
+
+}; // End class sum<L_EXPR,R_EXPR,INTERNAL>
+
+
+template<typename L_EXPR, typename R_EXPR, typename INTERNAL = float>
+class difference {
+// Typedefs
+protected:
+
+	typedef L_EXPR   left_t;
+	typedef R_EXPR   right_t;
+	typedef INTERNAL internal_t;
+
+
+// Variables
+private:
+
+	left_t  m_lhs;
+	right_t m_rhs;
+
+
+// Constructors
+public:
+
+	difference( const left_t& lhs, const right_t& rhs ) : m_lhs(lhs), m_rhs(rhs) { }
+
+
+
+// Methods
+public:
+
+	internal_t __evaluate ( unsigned int i ) const {
+		return m_lhs[i] + m_rhs[i];
+	}
+
+
+// Operators
+public:
+
+	internal_t operator [] ( unsigned int i ) const {
+		return m_lhs[i] - m_rhs[i];
+	}
+
+}; // End class difference<L_EXPR,R_EXPR,INTERNAL>
+
+
+template<typename T, typename INTERNAL = float>
+class product {
+// Typedefs
+protected:
+
+	typedef INTERNAL internal_t;
+
+
+// Variables
+private:
+
+	T          m_value;
+	internal_t m_scalar;
+
+
+// Constructors
+public:
+
+	product( const internal_t scalar, const T& value ) : m_value( value ), m_scalar( scalar ) { }
+
+
+// Methods
+public:
+
+	internal_t __evaluate ( unsigned int i ) const {
+		return m_scalar * m_value[i];
+	}
+
+// Operators
+public:
+
+	internal_t operator [] ( unsigned int i ) const {
+		return m_scalar * m_value[i];
+	}
+
+}; // End class product<T,INTERNAL>
+
+
+template<typename L, typename R>
+inline const sum<L,R> operator + ( const L& lhs, const R& rhs ) {
+	return sum<L,R>( lhs, rhs );
+}
+
+template<typename L, typename R>
+inline const difference<L,R> operator - ( const L& lhs, const R& rhs ) {
+	return difference<L,R>( lhs, rhs );
+}
+
+template<typename T>
+inline const product<T> operator * ( const float scalar, const T& value ) {
+	return product<T>( scalar, value );
+}
+
+template<typename T>
+inline const product<T> operator * ( const T& value, const float scalar ) {
+	return product<T>( scalar, value );
+}
+
 
 } // End namespace euclib
 
