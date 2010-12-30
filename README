@@ -13,19 +13,17 @@ about:
 	and intersections.
 	
 note on compilation:
-	This project is partially an exploration of the new C++0X language features
-	by myself, and thus this project extensively uses C++0X constructs and
+	This project is partially an exploration of the new C++0x language features
+	by myself, and thus this project extensively uses C++0x constructs and
 	language features, most notably:
 		rvalue references
 		variadic templates
 		static_assert
 		intializer lists
 		auto
-	if you do not use the included makefile, make sure you are using at least
-	gcc 4.5 with the -std=c++0x flag or a compiler that will support these
-	features.  Additionally, I will most likely be including at least some
-	boost dependencies in the future, so having the boost libraries will
-	soon become a requirement.
+	Make sure you are using at least gcc 4.5 with the -std=c++0x flag or a
+	compiler that will support these features.  Additionally, I am using some
+	boost dependencies so having boost installed to <boost/...> is required.
 
 usage:
 	Since this is a generic library, it will most likely need only header file

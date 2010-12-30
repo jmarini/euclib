@@ -184,6 +184,9 @@ void round_nearest( float& value ) {
 //   i.e.  v1 + 3 * ( v2 + v3 )
 //   Adapted from:  J. Blinn, "Optimizing C++ Vector Expressions," in Notation, Notation, Notation.
 //                    San Francisco, Morgan Kaufmann, 2002, pp 237-253
+//  Ran into some problems where using the interface he used, any data type with operator []
+//   defined would construct validly, and I could not find a good static_assert to stop it,
+//   so I used a method __evaluate as a temporary fix.
 
 template<typename L_EXPR, typename R_EXPR, typename INTERNAL = float>
 class sum {
