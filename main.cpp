@@ -29,7 +29,7 @@
 #include <time.h>
 
 #include "point.hpp"
-#include "direction.hpp"
+#include "vector.hpp"
 
 using namespace euclib;
 using namespace std;

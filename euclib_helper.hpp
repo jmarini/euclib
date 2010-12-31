@@ -1,5 +1,4 @@
-/*	euclib_helper.hpp  v 0.0.6.10.1122
- *
+/*
  *	Copyright (C) 2010 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
@@ -21,6 +20,7 @@
 #define EUBLIB_HELPER_HPP
 
 #include "point.hpp"
+#include "vector.hpp"
 #include "line.hpp"
 #include "segment.hpp"
 #include "rect.hpp"
@@ -99,7 +99,7 @@ const float RADIANS = PI / 180.f;
 	rect2<T> translate( const rect2<T>& rect, T x, T y ) {
 		return rect2<T>{ rect.l + x, rect.r + x, rect.t + y, rect.b + y };
 	}
-	
+
 	// friend function
 	template<typename T>
 	polygon2<T> translate( const polygon2<T>& poly, T x, T y ) {
@@ -117,7 +117,7 @@ const float RADIANS = PI / 180.f;
 /**********************
  * Rotation Functions *
  **********************/
- 
+
  	// TODO: include rotate rect --> poly ??
 
 	template<typename T>
@@ -189,7 +189,7 @@ const float RADIANS = PI / 180.f;
 		                                   -over.start_pt( ).y );
 		point2<T> t_targ = translate( target, -over.start_pt( ).x,
 		                                      -over.start_pt( ).y );
-		
+
 		// get translation matrix
 		float length = segment2<T>{ point2<T>{ 0, 0 }, t_over.end_pt( ) }.length( );
 		length *= length;
@@ -217,7 +217,7 @@ const float RADIANS = PI / 180.f;
 			tmp.x += 0.5f;
 			tmp.y += 0.5f;
 		}
-		
+
 		// translate back
 		return translate( point2<T>{ static_cast<T>(tmp.x),
 		                             static_cast<T>(tmp.y) },
@@ -229,7 +229,7 @@ const float RADIANS = PI / 180.f;
 		return segment2<T>{ mirror( target.pt1, over ),
 		                    mirror( target.pt2, over ) };
 	}
-	
+
 	template<typename T>
 	line2<T> mirror( const line2<T>& target, const line2<T>& over ) {
 		return line2<T>{ mirror( target.start_pt( ), over ),
@@ -298,7 +298,7 @@ const float RADIANS = PI / 180.f;
 		if( pt == point2<T>::null( ) || line == line2<T>::null( ) ) {
 			return point2<T>::null( );
 		}
-		
+
 		if( equal( line.at_x( pt.x ), pt.y ) ) {
 			return pt;
 		}
@@ -322,7 +322,7 @@ const float RADIANS = PI / 180.f;
 			return point2<T>::null( );
 		}
 	}
-	
+
 	template<typename T>
 	point2<T> overlap( const point2<T>& pt, const polygon2<T>& poly ) {
 		// check if either is null
@@ -333,7 +333,7 @@ const float RADIANS = PI / 180.f;
 		if( overlap( pt, poly.m_bounding_box ) == point2<T>::null( ) ) {
 			return point2<T>::null( );
 		}
-		
+
 		// check actual polygon
 		//   the point should be on the same side of every line making
 		//   up the polygon if it is inside
@@ -355,10 +355,10 @@ const float RADIANS = PI / 180.f;
 
 		return pt;
 	}
-	
-	
+
+
 	// line with *
-/*	
+/*
 	template<typename T>
 	point2<T> overlap( const line2<T>& line, const point2<T>& pt ) {
 		return overlap( pt, line );
@@ -380,7 +380,7 @@ const float RADIANS = PI / 180.f;
 		         ln1.intercept( ) == std::numeric_limits<float>::infinity( ) ) {
 			return point2<T>::null( );
 		}
-		
+
 		// if ln1 is vertical
 		if( ln1.intercept( ) == std::numeric_limits<float>::infinity( ) ) {
 			float x = (float)ln1.pt1.x;
@@ -403,7 +403,7 @@ const float RADIANS = PI / 180.f;
 			}
 			return point2<T>{ (T)x, (T)y };
 		}
-		
+
 		// general case
 		float x = (ln1.intercept( )-ln2.intercept( )) / (ln2.slope( )-ln1.slope( ));
 		float y = ln1.slope( )*x + ln1.intercept( );
@@ -414,7 +414,7 @@ const float RADIANS = PI / 180.f;
 		}
 		return point2<T>{ (T)x, (T)y };
 	}
-	
+
 	// TODO: this seems really messy, there should be a better/cleaner algo
 	template<typename T>
 	line2<T> overlap( const line2<T>& line, const rect2<T>& rect ) {
@@ -456,10 +456,10 @@ const float RADIANS = PI / 180.f;
 		else if( i_r && i_t ) { return line2<T>{ r, t }; }
 		else if( i_r && i_b ) { return line2<T>{ r, b }; }
 		else if( i_t && i_b ) { return line2<T>{ t, b }; }
-		
+
 		return line2<T>::null( );
 	}
-	
+
 	// TODO: only checks against bounding box right now
 	template<typename T>
 	line2<T> overlap( const line2<T>& line, const polygon2<T>& poly ) {
@@ -467,12 +467,12 @@ const float RADIANS = PI / 180.f;
 		if( line == line2<T>::null( ) || poly == polygon2<T>::null( ) ) {
 			return line2<T>::null( );
 		}
-		
+
 		// check bounding box first
 		if( overlap( line, poly.m_bounding_box ) == line2<T>::null( ) ) {
 			return line2<T>::null( );
 		}
-		
+
 		return overlap( line, poly.m_bounding_box );
 	}
 */
@@ -497,7 +497,7 @@ const float RADIANS = PI / 180.f;
  */
 
 //	template<typename T>
-	
+
 
 } // End namespace euclib
 
