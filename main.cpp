@@ -30,8 +30,6 @@
 
 #include "point.hpp"
 #include "direction.hpp"
-#include "line.hpp"
-#include "segment.hpp"
 
 using namespace euclib;
 using namespace std;
@@ -58,66 +56,37 @@ int main( int argc, char *argv[] ) {
 	//////////////////////////////////////////
 	//  Testing
 
-	point2i pt1; // default
-	point2i pt2 { 1, 3 }; // list, same length
-	point2i pt3 { pt2 }; // copy
-	point2i pt4 { 2 }; // list, too short
-	point3i pt5 { 3, 4, 5 };
-	pt1 = pt4; // assignment
-	cout << "pt1:   " << pt1.x( ) << "," << pt1.y( ) << "\n";
-	cout << "pt2:   " << pt2.x( ) << "," << pt2.y( ) << "\n";
-	cout << "pt3:   " << pt3.x( ) << "," << pt3.y( ) << "\n";
-	cout << "pt4:   " << pt4.x( ) << "," << pt4.y( ) << "\n";
-	cout << "pt5:   " << pt5.x( ) << "," << pt5.y( ) << "," << pt5.z( ) << "\n";
-	pt1.x( ) = 4;
-	// 2 * [2,0] + [1,3] * 4 + 5 * [1,3] - [2,0]
-	pt4 = 2 * pt1 + pt2;// * 4 + 5 * pt2 - pt1; // testing out expression evaluation
-	cout << "pt1:   " << pt1.x( ) << "," << pt1.y( ) << "\n";
-	cout << "pt4:   " << pt4.x( ) << "," << pt4.y( ) << "\n";
-	cout << "pt2 == pt3: " << ( pt2 == pt3 ? "true\n" : "false\n" );
-	cout << "pt2 != pt4: " << ( pt2 != pt4 ? "true\n" : "false\n" );
+	point2f pt1;				// default
+	point2f pt2 { 1.f, 3.f };	// list, same length
+	point2f pt3 { pt2 };		// copy
+	point2f pt4 { 2.f };		// list, too short
+	pt1 = 3.f * ( pt3 + pt4 );	// expression
+	cout << "=== points ===\n"
+	     << "pt1: " << pt1[0] << ", " << pt1[1] << "\n"
+	     << "pt2: " << pt2[0] << ", " << pt2[1] << "\n"
+	     << "pt3: " << pt3[0] << ", " << pt3[1] << "\n"
+	     << "pt4: " << pt4[0] << ", " << pt4[1] << "\n";
 
-	point<int,10> pt6 { 1, 2, 3, 4, 5, 9 };
-	cout << "pt6:   ";
-	for( unsigned int i = 0; i < pt6.dimension( ); ++i ) {
-		cout << pt6[i] << ( i == pt6.dimension( ) - 1 ? "\n" : "," );
-	}
+	vector2f v1;				// default
+	vector2f v2 { 5.f, 6.f };	// list, same length
+	vector2f v3 { v2 };			// copy
+	vector2f v4 { 1.f };		// list, too short
+	v1 = 2.f * ( v3 + v4 );		// expression
+	cout << "=== vector ===\n"
+	     << "v1:  " << v1[0] << ", " << v1[1] << "\n"
+	     << "v2:  " << v2[0] << ", " << v2[1] << "\n"
+	     << "v3:  " << v3[0] << ", " << v3[1] << "\n"
+	     << "v4:  " << v4[0] << ", " << v4[1] << "\n";
 
-	direction2i dir1 { 3, 4 };
-	direction2i dir2 { pt1 };
-	direction2i dir3 { 6, 8 };
-	direction2i dir4 { dir1 };
-	cout << "dir1:  " << dir1[0] << " " << dir1[1] << "\n";
-	cout << "dir2:  " << dir2[0] << " " << dir2[1] << "\n";
-	cout << "dir3:  " << dir3[0] << " " << dir3[1] << "\n";
-	cout << "dir4:  " << dir4[0] << " " << dir4[1] << "\n";
-	cout << "dir1 != dir2: " << ( dir1 != dir2 ? "true\n" : "false\n" );
-	cout << "dir1 != dir3: " << ( dir1 != dir3 ? "true\n" : "false\n" );
-	cout << "dir1 != dir4: " << ( dir1 != dir4 ? "true\n" : "false\n" );
-
-	line2i line1;
-	cout << "line1: " << line1.base_point( ).x( ) << " " << line1.base_point( ).y( )
-	     << ",  " << line1.base_direction( ).x( ) << " " << line1.base_direction( ).y( ) << "\n";
-	line2i line2 { pt2, dir1 };
-	line2i line3 { line2 };
-	line1 = line3;
-	line2i line4 { pt2, pt4 };
-	cout << "line1: " << line1.base_point( ).x( ) << " " << line1.base_point( ).y( )
-	     << ",  " << line1.base_direction( ).x( ) << " " << line1.base_direction( ).y( ) << "\n";
-	cout << "line2: " << line2.base_point( ).x( ) << " " << line2.base_point( ).y( )
-	     << ",  " << line2.base_direction( ).x( ) << " " << line2.base_direction( ).y( ) << "\n";
-	cout << "line3: " << line3.base_point( ).x( ) << " " << line3.base_point( ).y( )
-	     << ",  " << line3.base_direction( ).x( ) << " " << line3.base_direction( ).y( ) << "\n";
-	cout << "line4: " << line4.base_point( ).x( ) << " " << line4.base_point( ).y( )
-	     << ",  " << line4.base_direction( ).x( ) << " " << line4.base_direction( ).y( ) << "\n";
-
-	segment<float,2,double> seg1 { point2f{ 1.f, 1.f }, point2f{ 2.45f, 5.67f } };
-	cout << "seg1:  " << seg1.base_point( ).x( ) << " " << seg1.base_point( ).y( )
-	     << ",  " << seg1.base_direction( ).x( ) << " " << seg1.base_direction( ).y( ) << "\n";
-	point2f ptf1 = seg1.extrapolate( 1 );
-	cout << "pt1:   " << ptf1.x( ) << "," << ptf1.y( ) << "\n";
-	ptf1 = seg1.extrapolate( -1 );
-	cout << "pt1:   " << ptf1.x( ) << "," << ptf1.y( ) << "\n";
+	vector2f v5 { pt1 };					// vector from point
+	vector2f v6 { 3.f * ( pt3 + pt4 ) };	// vector from point expression
+	point2f pt5 { v1 };						// point from vector
+	point2f pt6 { 2.f * ( v3 + v4 ) };		// point from vector expression
+	cout << "=== mixed ===\n"
+	     << "v5:  " << v5[0]  << ", " << v5[1]  << "\n"
+	     << "v6:  " << v6[0]  << ", " << v6[1]  << "\n"
+	     << "pt5: " << pt5[0] << ", " << pt5[1] << "\n"
+	     << "pt6: " << pt6[0] << ", " << pt6[1] << "\n";
 
 	return 0;
 }

@@ -213,7 +213,6 @@ public:
 public:
 
 	internal_t operator [] ( unsigned int i ) const {
-		std::cout << "=== default[" << i << "]: " << m_obj[i] << "\n";
 		return m_obj[i];
 	}
 
