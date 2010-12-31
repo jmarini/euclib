@@ -30,6 +30,8 @@
 
 #include "point.hpp"
 #include "vector.hpp"
+#include "line.hpp"
+#include "segment.hpp"
 
 using namespace euclib;
 using namespace std;
@@ -87,6 +89,20 @@ int main( int argc, char *argv[] ) {
 	     << "v6:  " << v6[0]  << ", " << v6[1]  << "\n"
 	     << "pt5: " << pt5[0] << ", " << pt5[1] << "\n"
 	     << "pt6: " << pt6[0] << ", " << pt6[1] << "\n";
+
+	line2f l1;				// default
+	line2f l2 { pt2, pt1 };	// point, point
+	line2f l3 { pt2, v2 };	// point, vector
+	line2f l4 { l2 };		// copy
+	cout << "=== line ===\n"
+	     << "l1:  " << l1.base_point( )[0] << ", " << l1.base_point( )[1]
+	     << "    " << l1.base_vector( )[0] << ", " << l1.base_vector( )[1] << "\n"
+	     << "l2:  " << l2.base_point( )[0] << ", " << l2.base_point( )[1]
+	     << "    " << l2.base_vector( )[0] << ", " << l2.base_vector( )[1] << "\n"
+	     << "l3:  " << l3.base_point( )[0] << ", " << l3.base_point( )[1]
+	     << "    " << l3.base_vector( )[0] << ", " << l3.base_vector( )[1] << "\n"
+	     << "l4:  " << l4.base_point( )[0] << ", " << l4.base_point( )[1]
+	     << "    " << l4.base_vector( )[0] << ", " << l4.base_vector( )[1] << "\n";
 
 	return 0;
 }

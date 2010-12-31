@@ -24,15 +24,13 @@
 
 namespace euclib {
 
-template<typename T, unsigned int D, typename INTERNAL = float>
-class segment : public line_base<T,D,INTERNAL> {
+template<typename T, unsigned int D>
+class segment : public line_base<T,D> {
 // Typedefs
 protected:
 
-	typedef line_base<T,2,INTERNAL>         base_t;
-	typedef INTERNAL                        internal_t;
-	typedef std::numeric_limits<T>          limit_t;
-	typedef std::numeric_limits<internal_t> internal_limit_t;
+	typedef line_base<T,D>         base_t;
+	typedef std::numeric_limits<T> limit_t;
 
 
 // Constructors
@@ -42,27 +40,62 @@ public:
 	segment( const base_t& line ) : base_t( line ) { }
 	segment( base_t&& line ) : base_t( std::forward<base_t>( line ) ) { }
 	segment( const point<T,D>& pt1, const point<T,D>& pt2 ) : base_t( pt1, pt2 ) { }
-	template<typename R>
-	segment( const point<T,D>& pt, const direction<R,D>& dir ) : base_t( pt, dir ) { }
+	segment( const point<T,D>& pt, const vector<T,D>& vec ) : base_t( pt, vec ) { }
 
 
 // Methods
 public:
 
-	inline internal_t length( ) const { return base_t::m_direction.length( ); }
-	inline T length_sq( ) const { return base_t::m_direction.length_sq( ); }
+	inline T length( ) const { return base_t::m_vector.length( ); }
+	inline T length_sq( ) const { return base_t::m_vector.length_sq( ); }
 
 	// positive starts from end of direction
 	// negative starts from base of direction
-	point<T,D> extrapolate( internal_t distance ) const {
-		internal_t t = distance / base_t::m_direction.length( );
-		if( greater_than( distance, static_cast<internal_t>(0) ) ) { t += static_cast<internal_t>(1); }
-		point<T,D> result = base_t::m_point + base_t::m_direction * t;
+	point<T,D> extrapolate( T distance ) const {
+		T t = distance / base_t::m_vector.length( );
+		if( greater_than( distance, 0 ) ) { t += 1; }
+		point<T,D> result = base_t::m_point + t * base_t::m_vector;
 		return result;
 	}
 
-}; // End class segment<T,D,INTERNAL>
+}; // End class segment<T,D>
 
+
+template<typename T>
+class segment<T,2> : public line_base<T,2> {
+// Typedefs
+protected:
+
+	typedef line_base<T,2>         base_t;
+	typedef std::numeric_limits<T> limit_t;
+
+
+// Constructors
+public:
+
+	segment( ) : base_t( ) { }
+	segment( const base_t& line ) : base_t( line ) { }
+	segment( base_t&& line ) : base_t( std::forward<base_t>( line ) ) { }
+	segment( const point<T,2>& pt1, const point<T,2>& pt2 ) : base_t( pt1, pt2 ) { }
+	segment( const point<T,2>& pt, const vector<T,2>& vec ) : base_t( pt, vec ) { }
+
+
+// Methods
+public:
+
+	inline T length( ) const { return base_t::m_vector.length( ); }
+	inline T length_sq( ) const { return base_t::m_vector.length_sq( ); }
+
+	// positive starts from end of direction
+	// negative starts from base of direction
+	point<T,2> extrapolate( T distance ) const {
+		T t = distance / base_t::m_vector.length( );
+		if( greater_than( distance, 0 ) ) { t += 1; }
+		point<T,2> result = base_t::m_point + t * base_t::m_vector;
+		return result;
+	}
+
+}; // End class segment<T,D>
 /*
 template<typename T>
 class segment2 {
@@ -395,10 +428,9 @@ public:
 
 }; // End class segment2<T>
 */
-typedef segment<int,2>           segment2i;
+
 typedef segment<float,2>         segment2f;
 typedef segment<double,2>        segment2d;
-typedef segment<unsigned int,2>  segment2u;
 
 }  // End namespace euclib
 

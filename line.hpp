@@ -22,33 +22,28 @@
 #include <boost/type_traits/is_floating_point.hpp>
 #include "euclib_math.hpp"
 #include "point.hpp"
-#include "direction.hpp"
+#include "vector.hpp"
 
 namespace euclib {
 
-template<typename T, unsigned int D, typename INTERNAL = float>
+template<typename T, unsigned int D>
 class line_base {
 // Typdefs
 protected:
 
 	typedef std::numeric_limits<T>          limit_t;
-	typedef INTERNAL                        internal_t;
-	typedef std::numeric_limits<internal_t> internal_limit_t;
 
-	// This class can only be used with scalar types
-	//   or types with a specific specialization
-	static_assert( limit_t::is_specialized,
-	               "type not compatible with std::numeric_limits" );
+	// This class can only be used with floating point types
+	//   soon, support will be added for fixed point types
+	static_assert( boost::is_floating_point<T>::value, "T must be floating point" );
 	static_assert( D != 0, "cannot have 0-dimensional object" );
-	static_assert( boost::is_floating_point<internal_t>::value,
-	               "INTERNAL must be float or double" );
 
 
 // Variables
 protected:
 
-	point<T,D>              m_point;      // line defined as passing through a point
-	direction<internal_t,D> m_direction;  //   in a direction
+	point<T,D>  m_point;   // line defined as passing through a point
+	vector<T,D> m_vector;  //   with a direction vector
 
 
 // Constructors
@@ -57,27 +52,17 @@ protected: // cannot construct directly
 	line_base( ) { }
 	line_base( const line_base<T,D>& line ) { *this = line; }
 	line_base( line_base<T,D>&& line ) { *this = std::move( line ); }
-	line_base( const point<T,D>& pt1, const point<T,D>& pt2 ) {
-		m_point = pt1;
-		m_direction = direction<internal_t,D> {
-		                  static_cast<internal_t>( pt2.x( ) - pt1.x( ) ),
-		                  static_cast<internal_t>( pt2.y( ) - pt1.y( ) )
-		              };
-	}
-	template<typename R>
-	line_base( const point<T,D>& pt, const direction<R,D>& dir ) :
-		m_point( pt ) {
-		for( unsigned int i = 0; i < D; ++i ) {
-			m_direction = static_cast<internal_t>( dir[i] );
-		}
-	}
+	line_base( const point<T,D>& pt1, const point<T,D>& pt2 ) : m_point(pt1), m_vector(pt2 - pt1) { }
+	line_base( const point<T,D>& pt, const vector<T,D>& vec ) : m_point( pt ), m_vector( vec ) { }
 
 
 // Methods
 public:
 
-	point<T,D>          base_point( ) const     { return m_point; }
-	direction<internal_t,D> base_direction( ) const { return m_direction; }
+	point<T,D>  base_point( ) const  { return m_point; }
+	vector<T,D> base_vector( ) const { return m_vector; }
+
+	unsigned int dimension( ) const { return D; }
 
 
 // Operators
@@ -85,24 +70,22 @@ public:
 
 	line_base<T,D>& operator = ( const line_base<T,D>& line ) {
 		m_point = line.m_point;
-		m_direction = line.m_direction;
+		m_vector = line.m_vector;
 		return *this;
 	}
 
 	line_base<T,D>& operator = ( line_base<T,D>&& line ) {
 		std::swap( m_point, line.m_point );
-		std::swap( m_direction, line.m_direction );
+		std::swap( m_vector, line.m_vector );
 		return *this;
 	}
 
 	// TODO: needs to be fixed, different for line and segment
 	bool operator == ( const line_base<T,D>& line ) const {
-		internal_t slope1, slope2;
+		T slope1, slope2;
 		for( unsigned int i = 1; i < D; ++i ) {
-			slope1 = static_cast<internal_t>(m_direction[i]) /
-			         static_cast<internal_t>(m_direction[0]);
-			slope2 = static_cast<internal_t>(line.m_direction[i]) /
-			         static_cast<internal_t>(line.m_direction[0]);
+			slope1 = m_vector[i] / m_vector[0];
+			slope2 = line.m_vector[i] / line.m_vector[0];
 			if( not_equal( slope1, slope2 ) ) { return false; }
 			// check intercepts...
 		}
@@ -114,17 +97,15 @@ public:
 		return !(*this == line);
 	}
 
-}; // End class line_base<T,D,INTERNAL>
+}; // End class line_base<T,D>
 
-template<typename T, unsigned int D, typename INTERNAL = float>
-class line : public line_base<T,D,INTERNAL> {
+template<typename T, unsigned int D>
+class line : public line_base<T,D> {
 // Typedefs
 protected:
 
-	typedef line_base<T,D,INTERNAL>         base_t;
-	typedef INTERNAL                        internal_t;
-	typedef std::numeric_limits<T>          limit_t;
-	typedef std::numeric_limits<internal_t> internal_limit_t;
+	typedef line_base<T,D>         base_t;
+	typedef std::numeric_limits<T> limit_t;
 
 
 // Constructors
@@ -134,21 +115,18 @@ public:
 	line( const base_t& line ) : base_t( line ) { }
 	line( base_t&& line ) : base_t( std::forward<base_t>( line ) ) { }
 	line( const point<T,D>& pt1, const point<T,D>& pt2 ) : base_t( pt1, pt2 ) { }
-	template<typename R>
-	line( const point<T,D>& pt, const direction<R,D>& dir ) : base_t( pt, dir ) { }
+	line( const point<T,D>& pt, const vector<T,D>& vec ) : base_t( pt, vec ) { }
 
 }; // End class line<T,D>
 
 
-template<typename T, typename INTERNAL>
-class line<T,2,INTERNAL> : public line_base<T,2,INTERNAL> {
+template<typename T>
+class line<T,2> : public line_base<T,2> {
 // Typedefs
 protected:
 
-	typedef line_base<T,2,INTERNAL>         base_t;
-	typedef INTERNAL                        internal_t;
-	typedef std::numeric_limits<T>          limit_t;
-	typedef std::numeric_limits<internal_t> internal_limit_t;
+	typedef line_base<T,2>         base_t;
+	typedef std::numeric_limits<T> limit_t;
 
 
 // Constructors
@@ -158,69 +136,64 @@ public:
 	line( const base_t& line ) : base_t( line ) { }
 	line( base_t&& line ) : base_t( std::forward<base_t>( line ) ) { }
 	line( const point<T,2>& pt1, const point<T,2>& pt2 ) : base_t( pt1, pt2 ) { }
-	template<typename R>
-	line( const point<T,2>& pt, const direction<R,2>& dir ) : base_t( pt, dir ) { }
+	line( const point<T,2>& pt, const vector<T,2>& vec ) : base_t( pt, vec ) { }
 
 
 // Methods
 public:
 
-	internal_t slope( ) const {
+	T slope( ) const {
 		// vertical line
-		if( equal( base_t::m_direction.x( ), 0 ) ) {
-			return internal_limit_t::infinity( );
+		if( equal( base_t::m_vector.x( ), 0 ) ) {
+			return limit_t::infinity( );
 		}
 
-		return base_t::m_direction.y( ) / base_t::m_direction.x( );
+		return base_t::m_vector.y( ) / base_t::m_vector.x( );
 	}
 
 	T intercept( ) const {
 		// vertical line
-		if( equal( base_t::m_direction.x( ), 0 ) ) {
-			return internal_limit_t::infinity( );
+		if( equal( base_t::m_vector.x( ), 0 ) ) {
+			return limit_t::infinity( );
 		}
 
-		internal_t tmp = slope( ) * static_cast<internal_t>(base_t::m_point.x( ));
-		return base_t::m_point.y( ) - static_cast<T>( round_nearest<T>(tmp) );
+		return base_t::m_point.y( ) - slope( ) * base_t::m_point.x( );
 	}
 
 	T at_x( T x ) const {
 		// vertical line
-		if( equal( base_t::m_direction.x( ), 0 ) ) {
-			return base_t::invalid;
+		if( equal( base_t::m_vector.x( ), 0 ) ) {
+			return limit_t::infinity( );
 		}
 		// horizontal line
-		else if( equal( base_t::m_direction.y( ), 0 ) ) {
+		else if( equal( base_t::m_vector.y( ), 0 ) ) {
 			return base_t::m_point.y( );
 		}
 
-		float tmp = slope( ) * static_cast<internal_t>(x);
-		return intercept( ) + static_cast<T>( round_nearest<T>(tmp) );
+		return intercept( ) + slope( ) * x;
 	}
 
 	T at_y( T y ) const {
 		// vertical line
-		if( equal( base_t::m_direction.x( ), 0 ) ) {
+		if( equal( base_t::m_vector.x( ), 0 ) ) {
 			return base_t::m_point.x( );
 		}
 		// horizontal line
-		else if( equal( base_t::m_direction.y( ), 0 ) ) {
-			return base_t::invalid;
+		else if( equal( base_t::m_vector.y( ), 0 ) ) {
+			return limit_t::infinity( );
 		}
 
-		internal_t tmp = static_cast<internal_t>(base_t::m_point.x( )) - intercept( );
+		T tmp = base_t::m_point.x( ) - intercept( );
 		tmp *= base_t::m_direction.x( ) / base_t::m_direction.y( ); // tmp * 1/slope
-		return static_cast<T>( round_nearest<T>(tmp) );
+		return tmp;
 	}
 
-}; // End class line<T,2,INTERNAL>
+}; // End class line<T,2>
 
 
 // Various typedefs to make usage easier
-typedef line<int,2>           line2i;
 typedef line<float,2>         line2f;
 typedef line<double,2>        line2d;
-typedef line<unsigned int,2>  line2u;
 
 
 }  // End namespace euclib
