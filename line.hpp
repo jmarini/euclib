@@ -59,8 +59,8 @@ protected: // cannot construct directly
 // Methods
 public:
 
-	point<T,D>  base_point( ) const  { return m_point; }
-	vector<T,D> base_vector( ) const { return m_vector; }
+	const point<T,D>&  base_point( ) const  { return m_point; }
+	const vector<T,D>& base_vector( ) const { return m_vector; }
 
 	unsigned int dimension( ) const { return D; }
 
@@ -142,32 +142,48 @@ public:
 // Methods
 public:
 
+	bool horizontal( ) const { return equal( base_t::m_vector[1], 0 ); }
+	bool vertical( ) const   { return equal( base_t::m_vector[0], 0 ); }
+
 	T slope( ) const {
 		// vertical line
-		if( equal( base_t::m_vector.x( ), 0 ) ) {
+		if( equal( base_t::m_vector[0], 0 ) ) {
 			return limit_t::infinity( );
 		}
 
-		return base_t::m_vector.y( ) / base_t::m_vector.x( );
+		return base_t::m_vector[1] / base_t::m_vector[0];
+	}
+
+	T inv_slope( ) const {
+		// vertical line
+		if( equal( base_t::m_vector[0], 0 ) ) {
+			return 0;
+		}
+		// horizontal line
+		else if( equal( base_t::m_vector[1], 0 ) ) {
+			return limit_t::infinity( );
+		}
+
+		return base_t::m_vector[0] / base_t::m_vector[1];
 	}
 
 	T intercept( ) const {
 		// vertical line
-		if( equal( base_t::m_vector.x( ), 0 ) ) {
+		if( equal( base_t::m_vector[0], 0 ) ) {
 			return limit_t::infinity( );
 		}
 
-		return base_t::m_point.y( ) - slope( ) * base_t::m_point.x( );
+		return base_t::m_point[1] - slope( ) * base_t::m_point[0];
 	}
 
 	T at_x( T x ) const {
 		// vertical line
-		if( equal( base_t::m_vector.x( ), 0 ) ) {
+		if( equal( base_t::m_vector[0], 0 ) ) {
 			return limit_t::infinity( );
 		}
 		// horizontal line
-		else if( equal( base_t::m_vector.y( ), 0 ) ) {
-			return base_t::m_point.y( );
+		else if( equal( base_t::m_vector[1], 0 ) ) {
+			return base_t::m_point[1];
 		}
 
 		return intercept( ) + slope( ) * x;
@@ -175,16 +191,16 @@ public:
 
 	T at_y( T y ) const {
 		// vertical line
-		if( equal( base_t::m_vector.x( ), 0 ) ) {
-			return base_t::m_point.x( );
+		if( equal( base_t::m_vector[0], 0 ) ) {
+			return base_t::m_point[0];
 		}
 		// horizontal line
-		else if( equal( base_t::m_vector.y( ), 0 ) ) {
+		else if( equal( base_t::m_vector[1], 0 ) ) {
 			return limit_t::infinity( );
 		}
 
-		T tmp = base_t::m_point.x( ) - intercept( );
-		tmp *= base_t::m_direction.x( ) / base_t::m_direction.y( ); // tmp * 1/slope
+		T tmp = base_t::m_point[0] - intercept( );
+		tmp *= base_t::m_direction[0] / base_t::m_direction[1]; // tmp * 1/slope
 		return tmp;
 	}
 

@@ -62,10 +62,17 @@ public:
 		return result;
 	}
 
-	T dot( const vector<T,D>& pt ) {
+	void normalize_in_place( ) {
+		T length = length( );
+		for( unsigned int i = 0; i < D; ++i ) {
+			base_t::m_data[i] /= length;
+		}
+	}
+
+	T dot( const vector<T,D>& v ) {
 		T sum = 0;
 		for( unsigned int i = 0; i < D; ++i ) {
-			sum += base_t::m_data[i] * pt.m_data[i];
+			sum += base_t::m_data[i] * v.m_data[i];
 		}
 		return sum;
 	}
@@ -82,6 +89,10 @@ public:
 	}
 
 }; // End class vector<T,D>
+
+
+template<typename T, unsigned int D>
+T dot( const vector<T,D>& v1, const vector<T,D>& v2 ) { return v1.dot( v2 ); }
 
 
 template<typename T>
@@ -125,12 +136,18 @@ public:
 		};
 	}
 
-	T dot( const vector<T,2>& pt ) {
-		return base_t::m_data[0] * pt.m_data[0] + base_t::m_data[1] * pt.m_data[1];
+	void normalize_in_place( ) {
+		T length = length( );
+		base_t::m_data[0] /= length;
+		base_t::m_data[1] /= length;
 	}
 
-	T cross( const vector<T,2>& pt ) const {
-		return base_t::m_data[0] * pt.m_data[1] - base_t::m_data[1] * pt.m_data[0];
+	T dot( const vector<T,2>& v ) {
+		return base_t::m_data[0] * v.m_data[0] + base_t::m_data[1] * v.m_data[1];
+	}
+
+	T cross( const vector<T,2>& v ) const {
+		return base_t::m_data[0] * v.m_data[1] - base_t::m_data[1] * v.m_data[0];
 	}
 
 	inline T length( ) const { return sqrt( length_sq( ) ); }
@@ -145,18 +162,25 @@ public:
 // Operators
 public:
 
-	bool operator == ( const vector<T,2>& pt ) const {
+	bool operator == ( const vector<T,2>& v ) const {
 		T slope1, slope2;
 		slope1 = base_t::m_data[0] / base_t::m_data[1];
-		slope2 = pt[0] / pt[1];
+		slope2 = v[0] / v[1];
 		return equal( slope1, slope2 );
 	}
 
-	bool operator != ( const vector<T,2>& pt ) const {
-		return !(*this == pt);
+	bool operator != ( const vector<T,2>& v ) const {
+		return !(*this == v);
 	}
 
 }; // End class vector<T,2>
+
+
+template<typename T>
+vector<T,2> cross( const vector<T,2>& v1, const vector<T,2>& v2 ) { return v1.cross( v2 ); }
+
+template<typename T>
+T dot( const vector<T,2>& v1, const vector<T,2>& v2 ) { return v1.dot( v2 ); }
 
 
 template<typename T>
@@ -204,21 +228,36 @@ public:
 		};
 	}
 
-	T dot( const vector<T,3>& pt ) {
-		return base_t::m_data[0] * pt.m_data[0] +
-		       base_t::m_data[1] * pt.m_data[1] +
-		       base_t::m_data[2] * pt.m_data[2];
+	void normalize_in_place( ) {
+		T length = length( );
+		base_t::m_data[0] /= length;
+		base_t::m_data[1] /= length;
+		base_t::m_data[2] /= length;
 	}
 
-	vector<T,3> cross( const vector<T,3>& pt ) const {
+	T dot( const vector<T,3>& v ) {
+		return base_t::m_data[0] * v.m_data[0] +
+		       base_t::m_data[1] * v.m_data[1] +
+		       base_t::m_data[2] * v.m_data[2];
+	}
+
+	vector<T,3> cross( const vector<T,3>& v ) const {
 		vector<T,3> result;
-		result.m_data[0] = base_t::m_data[1] * pt.m_data[2] -
-		                   base_t::m_data[2] * pt.m_data[1];
-		result.m_data[1] = base_t::m_data[0] * pt.m_data[2] -
-		                   base_t::m_data[2] * pt.m_data[0];
-		result.m_data[2] = base_t::m_data[0] * pt.m_data[1] -
-		                   base_t::m_data[1] * pt.m_data[0];
+		result.m_data[0] = base_t::m_data[1] * v.m_data[2] -
+		                   base_t::m_data[2] * v.m_data[1];
+		result.m_data[1] = base_t::m_data[0] * v.m_data[2] -
+		                   base_t::m_data[2] * v.m_data[0];
+		result.m_data[2] = base_t::m_data[0] * v.m_data[1] -
+		                   base_t::m_data[1] * v.m_data[0];
 		return result;
+	}
+
+	vector<T,3> vector_triple( const vector<T,3>& v1, const vector<T,3>& v2 ) const {
+		return this->cross( v1.cross( v2 ) );
+	}
+
+	T vector_scalar( const vector<T,3>& v1, const vector<T,3>& v2 ) const {
+		return this->dot( v1.cross( v2 ) );
 	}
 
 	inline T length( ) const { return sqrt( length_sq( ) ); }
@@ -232,6 +271,19 @@ public:
 	const T* to_gl( ) const { return base_t::m_data.data( ); }
 
 }; // End class vector<T,3>
+
+
+template<typename T>
+vector<T,3> vector_triple( const vector<T,3>& v1, const vector<T,3>& v2, const vector<T,3>& v3 ) { return v1.cross( v2.cross( v3 ) ); }
+
+template<typename T>
+T scalar_triple( const vector<T,3>& v1, const vector<T,3>& v2, const vector<T,3>& v3 ) { return v1.dot( v2.cross( v3 ) ); }
+
+template<typename T>
+vector<T,3> cross( const vector<T,3>& v1, const vector<T,3>& v2 ) { return v1.cross( v2 ); }
+
+template<typename T>
+T dot( const vector<T,3>& v1, const vector<T,3>& v2 ) { return v1.dot( v2 ); }
 
 
 template<typename T>
@@ -283,11 +335,19 @@ public:
 		};
 	}
 
-	T dot( const vector<T,4>& pt ) {
-		return base_t::m_data[0] * pt.m_data[0] +
-		       base_t::m_data[1] * pt.m_data[1] +
-		       base_t::m_data[2] * pt.m_data[2] +
-		       base_t::m_data[3] * pt.m_data[3];
+	void normalize_in_place( ) {
+		T length = length( );
+		base_t::m_data[0] /= length;
+		base_t::m_data[1] /= length;
+		base_t::m_data[2] /= length;
+		base_t::m_data[3] /= length;
+	}
+
+	T dot( const vector<T,4>& v ) {
+		return base_t::m_data[0] * v.m_data[0] +
+		       base_t::m_data[1] * v.m_data[1] +
+		       base_t::m_data[2] * v.m_data[2] +
+		       base_t::m_data[3] * v.m_data[3];
 	}
 
 	inline T length( ) const { return sqrt( length_sq( ) ); }
@@ -302,6 +362,10 @@ public:
 	const T* to_gl( ) const { return base_t::m_data.data( ); }
 
 }; // End class vector<T,4>
+
+
+template<typename T>
+T dot( const vector<T,4>& v1, const vector<T,4>& v2 ) { return v1.dot( v2 ); }
 
 
 // Specializations to compute expressions

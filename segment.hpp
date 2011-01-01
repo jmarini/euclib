@@ -58,6 +58,14 @@ public:
 		return result;
 	}
 
+	// positive starts from base of direction
+	// negative starts from end of direction
+	point<T,D> interpolate( T distance ) const {
+		T t = distance / base_t::m_vector.length( );
+		if( less_than( distance, 0 ) ) { t += 1; }
+		return point<T,D>{ base_t::m_point + t * base_t::m_vector };
+	}
+
 }; // End class segment<T,D>
 
 
@@ -86,140 +94,81 @@ public:
 	inline T length( ) const { return base_t::m_vector.length( ); }
 	inline T length_sq( ) const { return base_t::m_vector.length_sq( ); }
 
+	T width( ) const  { return base_t::m_vector[0]; }
+	T height( ) const { return base_t::m_vector[1]; }
+
+	T slope( ) const {
+		// vertical line
+		if( equal( base_t::m_vector[0], 0 ) ) {
+			return limit_t::infinity( );
+		}
+
+		return base_t::m_vector[1] / base_t::m_vector[0];
+	}
+
+	T inv_slope( ) const {
+		// vertical line
+		if( equal( base_t::m_vector[0], 0 ) ) {
+			return 0;
+		}
+		// horizontal line
+		else if( equal( base_t::m_vector[1], 0 ) ) {
+			return limit_t::infinity( );
+		}
+
+		return base_t::m_vector[0] / base_t::m_vector[1];
+	}
+
+	bool horizontal( ) const { return equal( base_t::m_vector[1], 0 ); }
+	bool vertical( ) const   { return equal( base_t::m_vector[0], 0 ); }
+
+	////////////////////////////////////////////////
 	// positive starts from end of direction
 	// negative starts from base of direction
+	// for all interpolate/extrapolate functions
 	point<T,2> extrapolate( T distance ) const {
 		T t = distance / base_t::m_vector.length( );
 		if( greater_than( distance, 0 ) ) { t += 1; }
-		point<T,2> result = base_t::m_point + t * base_t::m_vector;
-		return result;
+		return point<T,2>{ base_t::m_point + t * base_t::m_vector };
 	}
 
-}; // End class segment<T,D>
+	point<T,2> extrapolate_x( T x ) const {
+		T t = x / base_t::m_vector[0];
+		if( greater_than( x, 0 ) ) { t += 1; }
+		return point<T,2>{ base_t::m_point + t * base_t::m_vector };
+	}
+
+	point<T,2> extrapolate_y( T y ) const {
+		T t = y / base_t::m_vector[1];
+		if( greater_than( y, 0 ) ) { t += 1; }
+		return point<T,2>{ base_t::m_point + t * base_t::m_vector };
+	}
+
+	point<T,2> interpolate( T distance ) const {
+		T t = distance / base_t::m_vector.length( );
+		if( less_than( distance, 0 ) ) { t += 1; }
+		return point<T,2>{ base_t::m_point + t * base_t::m_vector };
+	}
+
+	point<T,2> interpolate_x( T x ) const {
+		T t = x / base_t::m_vector[0];
+		if( less_than( x, 0 ) ) { t += 1; }
+		return point<T,2>{ base_t::m_point + t * base_t::m_vector };
+	}
+
+	point<T,2> interpolate_y( T y ) const {
+		T t = y / base_t::m_vector[1];
+		if( less_than( y, 0 ) ) { t += 1; }
+		return point<T,2>{ base_t::m_point + t * base_t::m_vector };
+	}
+
+}; // End class segment<T,2>
+
 /*
-template<typename T>
-class segment2 {
-// Typdefs
-protected:
-
-	typedef std::numeric_limits<T>     limit_t;
-	typedef std::numeric_limits<float> float_limit_t;
-
-	// This class can only be used with scalar types
-	//   or types with a specific specialization
-	static_assert( limit_t::is_specialized,
-	               "type not compatible with std::numeric_limits" );
-
-// Variables
-public:
-
-	point2<T> pt1;
-	point2<T> pt2;
-
-private:
-
-	static T invalid; // holds either limit_t::infinity or limit_t::max
+}
 
 
-// Constructors
-public:
 
-	segment2( ) { set_null( ); }
-	segment2( const segment2<T>& segment ) { *this = segment; }
-	segment2( segment2<T>&& segment ) { *this = std::move( segment ); }
-	segment2( const point2<T>& p1, const point2<T>& p2 ) {
-		if( equal( p1.x, p2.x ) ) {
-			if( less_than( p1.y, p2.y ) ) {
-				pt1 = p1;
-				pt2 = p2;
-			}
-			else {
-				pt1 = p2;
-				pt2 = p1;
-			}
-		}
-		else {
-			if( less_than( p1.x, p2.x ) ) {
-				pt1 = p1;
-				pt2 = p2;
-			}
-			else {
-				pt1 = p2;
-				pt2 = p1;
-			}
-		}
-		check_valid( );
-	}
-	segment2( T x1, T y1, T x2, T y2 ) {
-		*this = segment2{ point2<T>{ x1, y1 }, point2<T>{ x2, y2 } };
-	}
-
-
-// Methods
-public:
-
-	// Returns a null segment, defined as point2<T>::null --> point2<T>::null
-	static segment2<T> null( ) {
-		static segment2<T> null = segment2<T>{ point2<T>::null( ),
-		                                       point2<T>::null( ) };
-		return null;
-	}
-
-	inline T width( )  const { return std::abs( pt1.x - pt2.x ); }
-	inline T height( ) const { return std::abs( pt1.y - pt2.y ); }
-
-	float slope( ) const {
-		// same x coordinate
-		if( equal(pt1.x, pt2.x) ) {
-			return float_limit_t::infinity( );
-		}
-
-		return static_cast<float>(pt2.y-pt1.y) / static_cast<float>(pt2.x-pt1.x);
-	}
-
-	float length( ) const {
-		float tmp = static_cast<float>(width( )*width( ) + height( )*height( ));
-		return std::sqrt( tmp );
-	}
-
-
-	// Extrapolate beyond the bounds of the line segment.
-	//   distance: the length beyond the segment to move,
-	//             sign determines which side of the segment to move from.
-	point2<T> extrapolate( float distance ) {
-		if( equal( distance, 0.f ) ) { return pt1; }
-
-		float slp = slope( );
-		// vertical line
-		if( slp == float_limit_t::infinity( ) ) {
-			if( limit_t::is_integer ) { distance += 0.5f; }
-			if ( less_than( distance, 0.f ) ) {
-				return point2<T>{ pt1.x, pt1.y + static_cast<T>(distance) };
-			}
-			else {
-				return point2<T>{ pt2.x, pt2.y + static_cast<T>(distance) };
-			}
-		}
-
-		float del_x = distance*distance / ( 1.f + slp*slp );
-		del_x = std::sqrt( del_x );
-		float del_y = slp * del_x;
-
-		// reduce rouding errors
-		if( limit_t::is_integer ) {
-			del_x += 0.5f;
-			del_y += 0.5f;
-		}
-
-		if( less_than( distance, 0.f ) ) {
-			return point2<T>{ pt1.x - static_cast<T>(del_x),
-			                  pt1.y - static_cast<T>(del_y) };
-		}
-		else {
-			return point2<T>{ pt2.x + static_cast<T>(del_x),
-			                  pt2.y + static_cast<T>(del_y) };
-		}
-	}
 
 	// value: amount beyond the segment to move,
 	//        sign determines which side of the segment to move from.

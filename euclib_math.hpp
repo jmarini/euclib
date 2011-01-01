@@ -187,8 +187,6 @@ void round_nearest( float& value ) {
 //   Adapted from:  J. Blinn, "Optimizing C++ Vector Expressions," in Notation, Notation, Notation.
 //                    San Francisco, Morgan Kaufmann, 2002, pp 237-253
 
-class expression { };
-
 template<typename T, typename INTERNAL = float>
 class container {
 // Typedefs
@@ -220,7 +218,7 @@ public:
 
 
 template<typename L_EXPR, typename R_EXPR, typename INTERNAL = float>
-class sum : expression {
+class sum {
 // Typedefs
 protected:
 
@@ -253,7 +251,7 @@ public:
 
 
 template<typename L_EXPR, typename R_EXPR, typename INTERNAL = float>
-class difference : expression {
+class difference {
 // Typedefs
 protected:
 
@@ -286,7 +284,7 @@ public:
 
 
 template<typename T, typename INTERNAL = float>
-class product : expression {
+class product {
 // Typedefs
 protected:
 
@@ -340,4 +338,3 @@ inline const product<container<T>> operator * ( const T& value, const float scal
 } // End namespace euclib
 
 #endif // EUCLIB_MATH_HPP
-

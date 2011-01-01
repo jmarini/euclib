@@ -104,6 +104,29 @@ int main( int argc, char *argv[] ) {
 	     << "l4:  " << l4.base_point( )[0] << ", " << l4.base_point( )[1]
 	     << "    " << l4.base_vector( )[0] << ", " << l4.base_vector( )[1] << "\n";
 
+	segment2f s1;				// default
+	segment2f s2 { pt2, pt1 };	// point, point
+	segment2f s3 { pt2, v2 };	// point, vector
+	segment2f s4 { s2 };		// copy
+	cout << "=== segment ===\n"
+	     << "s1:  " << s1.base_point( )[0] << ", " << s1.base_point( )[1]
+	     << "    " << s1.base_vector( )[0] << ", " << s1.base_vector( )[1] << "\n"
+	     << "s2:  " << s2.base_point( )[0] << ", " << s2.base_point( )[1]
+	     << "    " << s2.base_vector( )[0] << ", " << s2.base_vector( )[1] << "\n"
+	     << "s3:  " << s3.base_point( )[0] << ", " << s3.base_point( )[1]
+	     << "    " << s3.base_vector( )[0] << ", " << s3.base_vector( )[1] << "\n"
+	     << "s4:  " << s4.base_point( )[0] << ", " << s4.base_point( )[1]
+	     << "    " << s4.base_vector( )[0] << ", " << s4.base_vector( )[1] << "\n";
+
+	line2f l5 { s2 };		// line from segment
+	segment2f s5 { l2 };	// segment from line
+	cout << "=== mixed ===\n"
+	     << "l5:  " << l5.base_point( )[0] << ", " << l5.base_point( )[1]
+	     << "    " << l5.base_vector( )[0] << ", " << l5.base_vector( )[1] << "\n"
+	     << "s5:  " << s5.base_point( )[0] << ", " << s5.base_point( )[1]
+	     << "    " << s5.base_vector( )[0] << ", " << s5.base_vector( )[1] << "\n";
+
+
 	return 0;
 }
 
