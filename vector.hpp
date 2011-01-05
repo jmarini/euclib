@@ -1,5 +1,5 @@
 /*
- *	Copyright (C) 2010 Jonathan Marini
+ *	Copyright (C) 2010-2011 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -19,13 +19,12 @@
 #ifndef EUBLIB_VECTOR_HPP
 #define EUBLIB_VECTOR_HPP
 
-#include <boost/type_traits/is_floating_point.hpp>
 #include "euclib_math.hpp"
 #include "point.hpp"
 
 namespace euclib {
 
-template<typename T, unsigned int D>
+template<typename T, std::size_t D>
 class vector : public point_base<T,D> {
 // Typedefs
 protected:
@@ -33,18 +32,23 @@ protected:
 	typedef point_base<T,D> base_t;
 
 
+public:
+
+	typedef T               value_t;
+	typedef T&              ref_t;
+	typedef const T&        const_ref_t;
+	typedef std::size_t     size_t;
+	typedef std::array<T,D> data_t;
+	typedef const T*        raw_data_t;
+
 // Constructors
 public:
 
 	vector( ) : base_t( ) { }
 	vector( const base_t& pt ) : base_t( pt ) { }
 	vector( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
-	template<typename L, typename R>
-	vector( const sum<L,R,T>& expr ) : base_t( expr ) { }
-	template<typename L>
-	vector( const product<L,T>& expr ) : base_t( expr ) { }
-	template<typename L, typename R>
-	vector( const difference<L,R,T>& expr ) : base_t( expr ) { }
+	template<typename E>
+	vector( const expression_holder<E>& expr ) : base_t( expr ) { }
 	template<typename ... Args>
 	vector( T value, Args... values ) : base_t( value, values... ) { }
 
@@ -56,7 +60,7 @@ public:
 		vector<T,D> result;
 		T length = length( );
 
-		for( unsigned int i = 0; i < D; ++i ) {
+		for( std::size_t i = 0; i < D; ++i ) {
 			result[i] = base_t::m_data[i] / length;
 		}
 		return result;
@@ -64,14 +68,14 @@ public:
 
 	void normalize_in_place( ) {
 		T length = length( );
-		for( unsigned int i = 0; i < D; ++i ) {
+		for( std::size_t i = 0; i < D; ++i ) {
 			base_t::m_data[i] /= length;
 		}
 	}
 
 	T dot( const vector<T,D>& v ) {
 		T sum = 0;
-		for( unsigned int i = 0; i < D; ++i ) {
+		for( std::size_t i = 0; i < D; ++i ) {
 			sum += base_t::m_data[i] * v.m_data[i];
 		}
 		return sum;
@@ -81,7 +85,7 @@ public:
 
 	inline T length_sq( ) const {
 		T length = 0;
-		for( unsigned int i = 0; i < D; ++i ) {
+		for( std::size_t i = 0; i < D; ++i ) {
 			length += base_t::m_data[i] * base_t::m_data[i];
 			assert( length > base_t::m_data[i] ); // quick code to catch some overflows
 		}
@@ -109,12 +113,8 @@ public:
 	vector( ) : base_t( ) { }
 	vector( const base_t& pt ) : base_t( pt ) { }
 	vector( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
-	template<typename L, typename R>
-	vector( const sum<L,R,T>& expr ) : base_t( expr ) { }
-	template<typename L>
-	vector( const product<L,T>& expr ) : base_t( expr ) { }
-	template<typename L, typename R>
-	vector( const difference<L,R,T>& expr ) : base_t( expr ) { }
+	template<typename E>
+	vector( const expression_holder<E>& expr ) : base_t( expr ) { }
 	template<typename ... Args>
 	vector( T value, Args... values ) : base_t( value, values... ) { }
 
@@ -197,12 +197,8 @@ public:
 	vector( ) : base_t( ) { }
 	vector( const base_t& pt ) : base_t( pt ) { }
 	vector( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
-	template<typename L, typename R>
-	vector( const sum<L,R,T>& expr ) : base_t( expr ) { }
-	template<typename L>
-	vector( const product<L,T>& expr ) : base_t( expr ) { }
-	template<typename L, typename R>
-	vector( const difference<L,R,T>& expr ) : base_t( expr ) { }
+	template<typename E>
+	vector( const expression_holder<E>& expr ) : base_t( expr ) { }
 	vector( T x ) : base_t( x ) { }
 	vector( T x, T y ) : base_t( x, y ) { }
 	vector( T x, T y, T z ) : base_t( x, y, z ) { }
@@ -300,12 +296,8 @@ public:
 	vector( ) : base_t( ) { }
 	vector( const base_t& pt ) : base_t( pt ) { }
 	vector( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
-	template<typename L, typename R>
-	vector( const sum<L,R,T>& expr ) : base_t( expr ) { }
-	template<typename L>
-	vector( const product<L,T>& expr ) : base_t( expr ) { }
-	template<typename L, typename R>
-	vector( const difference<L,R,T>& expr ) : base_t( expr ) { }
+	template<typename E>
+	vector( const expression_holder<E>& expr ) : base_t( expr ) { }
 	vector( T x ) : base_t( x ) { }
 	vector( T x, T y ) : base_t( x, y ) { }
 	vector( T x, T y, T z ) : base_t( x, y, z ) { }
@@ -367,7 +359,7 @@ public:
 template<typename T>
 T dot( const vector<T,4>& v1, const vector<T,4>& v2 ) { return v1.dot( v2 ); }
 
-
+/*
 // Specializations to compute expressions
 template<typename T, unsigned int D>
 class container<vector<T,D>,T> {
@@ -404,18 +396,35 @@ public:
 	container( const vector<T,4>& obj ) : m_obj( obj ) { }
 	T operator [] ( unsigned int i ) const { return m_obj[i]; }
 };
-
+*/
 
 // Various typedefs to make usage easier
-typedef vector<float,2>         vector2f;
-typedef vector<float,3>         vector3f;
-typedef vector<float,4>         vector4f;
+typedef vector<float,2>       vector2f;
+typedef vector<float,3>       vector3f;
+typedef vector<float,4>       vector4f;
 
-typedef vector<double,2>        vector2d;
-typedef vector<double,3>        vector3d;
-typedef vector<double,4>        vector4d;
+typedef vector<double,2>      vector2d;
+typedef vector<double,3>      vector3d;
+typedef vector<double,4>      vector4d;
+
+typedef vector<long double,2> vector2ld;
+typedef vector<long double,3> vector3ld;
+typedef vector<long double,4> vector4ld;
+
+#ifdef EUCLIB_DECIMAL_TYPES
+typedef vector<decimal32,2>   vector2d32;
+typedef vector<decimal32,3>   vector3d32;
+typedef vector<decimal32,4>   vector4d32;
+
+typedef vector<decimal64,2>   vector2d64;
+typedef vector<decimal64,3>   vector3d64;
+typedef vector<decimal64,4>   vector4d64;
+
+typedef vector<decimal128,2>  vector2d128;
+typedef vector<decimal128,3>  vector3d128;
+typedef vector<decimal128,4>  vector4d128;
+#endif
 
 }  // End namespace euclib
 
 #endif // EUCLIB_VECTOR_HPP
-

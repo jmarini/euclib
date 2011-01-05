@@ -1,5 +1,5 @@
 /*
- *	Copyright (C) 2010 Jonathan Marini
+ *	Copyright (C) 2010-2011 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -19,17 +19,16 @@
 #ifndef EUBLIB_POINT_HPP
 #define EUBLIB_POINT_HPP
 
-#include <boost/type_traits/is_arithmetic.hpp>
-#include <boost/type_traits/is_floating_point.hpp>
-#include <boost/type_traits/is_base_of.hpp>
 #include <array>
 
+#include "type_traits.hpp"
 #include "euclib_math.hpp"
+#include "vector_expression.hpp"
 
 namespace euclib {
 
-template<typename T, unsigned int D>
-class point_base {
+template<typename T, std::size_t D>
+class point_base : public expression_holder<point_base<T,D>> {
 // Typedefs
 protected:
 
@@ -37,8 +36,19 @@ protected:
 
 	// This class can only be used with floating point types
 	//   soon, support will be added for fixed point types
-	static_assert( boost::is_floating_point<T>::value, "T must be floating point" );
+	static_assert( std::is_floating_point<T>::value || mpl::is_fixed_point<T>::value,
+	               "T must be floating point or fixed point decimal" );
 	static_assert( D != 0, "cannot have 0-dimensional object" );
+
+
+public:
+
+	typedef T               value_t;
+	typedef T&              ref_t;
+	typedef const T&        const_ref_t;
+	typedef std::size_t     size_t;
+	typedef std::array<T,D> data_t;
+	typedef const T*        raw_data_t;
 
 
 // Variables
@@ -48,21 +58,14 @@ protected:
 
 
 // Constructors
-protected: // cannot construct directly
+//protected: // cannot construct directly
+public: // TEMP
 
 	point_base( ) { }
 	point_base( const point_base<T,D>& pt ) { *this = pt; }
 	point_base( point_base<T,D>&& pt ) { *this = std::move( pt ); }
-	// For use when constructing points from expressions
-	//   explicit constructors for each type in order to resolve conflicts
-	template<typename L, typename R>
-	point_base( const sum<L,R,T>& expr ) { evaluate( expr ); }
-	template<typename L>
-	point_base( const product<L,T>& expr ) { evaluate( expr ); }
-	template<typename L, typename R>
-	point_base( const difference<L,R,T>& expr ) { evaluate( expr ); }
-	// Limit number of arguments to size of point
-	//   can have fewer, remaining spots filled with 0
+	template<typename E>
+	point_base( const expression_holder<E>& expr ) { evaluate( expr ); }
 	template<typename ... Args>
 	point_base( T value, Args... values ) {
 		static_assert( sizeof...(values) < D,
@@ -73,45 +76,46 @@ protected: // cannot construct directly
 // Methods
 public:
 
-	unsigned int dimension( ) const { return D; }
+	size_t dimension( ) const { return D; }
 
 
 protected:
 
 	template<typename ... Args>
-	inline void fill( unsigned int i, T value, Args... values ) {
+	inline void fill( std::size_t i, T value, Args... values ) {
 		m_data[i] = value;
 		fill( i + 1, values... );
 	}
 
-	inline void fill( unsigned int i ) {
+	inline void fill( std::size_t i ) {
 		for( ; i < D; ++i ) {
 			m_data[i] = 0;
 		}
 	}
 
-	template<typename Expr>
-	inline void evaluate( const Expr& expr ) {
-		for( unsigned int i = 0; i < D; ++i ) {
-			m_data[i] = expr[i];
+	template<typename E>
+	inline void evaluate( const expression_holder<E>& expr ) {
+		const E& tmp( expr );
+		for( std::size_t i = 0; i < D; ++i ) {
+			m_data[i] = tmp[i];
 		}
 	}
 
 // Operators
 public:
 
-	T operator [] ( unsigned int i ) const {
+	T operator [] ( std::size_t i ) const {
 		assert( i < D );
 		return m_data[i];
 	}
 
-	T& operator [] ( unsigned int i ) {
+	T& operator [] ( std::size_t i ) {
 		assert( i < D );
 		return m_data[i];
 	}
 
 	bool operator == ( const point_base<T,D>& pt ) const {
-		for( unsigned int i = 0; i < D; ++i ) {
+		for( std::size_t i = 0; i < D; ++i ) {
 			if( !equal( m_data[i], pt[i] ) ) {
 				return false;
 			}
@@ -133,17 +137,14 @@ public:
 		return *this;
 	}
 
-	// For use when assigning points from expressions
-	//   explicit constructors for each type in order to resolve conflicts
-	template<typename L, typename R>
-	point_base<T,D>& operator = ( const sum<L,R,T>& expr ) { evaluate( expr ); return *this; }
-	template<typename L>
-	point_base<T,D>& operator = ( const product<L,T>& expr ) { evaluate( expr ); return *this; }
-	template<typename L, typename R>
-	point_base<T,D>& operator = ( const difference<L,R,T>& expr ) { evaluate( expr ); return *this; }
+	template<typename E>
+	point_base<T,D>& operator = ( const expression_holder<E>& expr ) {
+		evaluate( expr );
+		return *this;
+	}
 
 	point_base<T,D>& operator += ( const point_base<T,D>& pt ) {
-		for( unsigned int i = 0; i < D; ++i ) {
+		for( std::size_t i = 0; i < D; ++i ) {
 			m_data[i] += pt.m_data[i];
 		}
 		return *this;
@@ -151,14 +152,14 @@ public:
 
 	template<typename R>
 	point_base<T,D>& operator -= ( const point_base<R,D>& pt ) {
-		for( unsigned int i = 0; i < D; ++i ) {
+		for( std::size_t i = 0; i < D; ++i ) {
 			m_data[i] -= pt.m_data[i];
 		}
 		return *this;
 	}
 
 	point_base<T,D>& operator *= ( T scalar ) {
-		for( unsigned int i = 0; i < D; ++i ) {
+		for( std::size_t i = 0; i < D; ++i ) {
 			m_data[i] *= scalar;
 		}
 		return *this;
@@ -167,7 +168,7 @@ public:
 }; // End class point_base<T,D>
 
 
-template<typename T, unsigned int D>
+template<typename T, std::size_t D>
 class point : public point_base<T,D> {
 // Typedefs
 protected:
@@ -181,12 +182,8 @@ public:
 	point( ) : base_t( ) { }
 	point( const base_t& pt ) : base_t( pt ) { }
 	point( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
-	template<typename L, typename R>
-	point( const sum<L,R,T>& expr ) : base_t( expr ) { }
-	template<typename L>
-	point( const product<L,T>& expr ) : base_t( expr ) { }
-	template<typename L, typename R>
-	point( const difference<L,R,T>& expr ) : base_t( expr ) { }
+	template<typename E>
+	point( const expression_holder<E>& expr ) : base_t( expr ) { }
 	template<typename ... Args>
 	point( T value, Args... values ) : base_t( value, values... ) { }
 
@@ -207,12 +204,8 @@ public:
 	point( ) : base_t( ) { }
 	point( const base_t& pt ) : base_t( pt ) { }
 	point( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
-	template<typename L, typename R>
-	point( const sum<L,R,T>& expr ) : base_t( expr ) { }
-	template<typename L>
-	point( const product<L,T>& expr ) : base_t( expr ) { }
-	template<typename L, typename R>
-	point( const difference<L,R,T>& expr ) : base_t( expr ) { }
+	template<typename E>
+	point( const expression_holder<E>& expr ) : base_t( expr ) { }
 	point( T x ) : base_t( x ) { }
 	point( T x, T y ) : base_t( x, y ) { }
 
@@ -244,12 +237,8 @@ public:
 	point( ) : base_t( ) { }
 	point( const base_t& pt ) : base_t( pt ) { }
 	point( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
-	template<typename L, typename R>
-	point( const sum<L,R,T>& expr ) : base_t( expr ) { }
-	template<typename L>
-	point( const product<L,T>& expr ) : base_t( expr ) { }
-	template<typename L, typename R>
-	point( const difference<L,R,T>& expr ) : base_t( expr ) { }
+	template<typename E>
+	point( const expression_holder<E>& expr ) : base_t( expr ) { }
 	point( T x ) : base_t( x ) { }
 	point( T x, T y ) : base_t( x, y ) { }
 	point( T x, T y, T z ) : base_t( x, y, z ) { }
@@ -284,12 +273,8 @@ public:
 	point( ) : base_t( ) { }
 	point( const base_t& pt ) : base_t( pt ) { }
 	point( base_t&& pt ) : base_t( std::forward<base_t>( pt ) ) { }
-	template<typename L, typename R>
-	point( const sum<L,R,T>& expr ) : base_t( expr ) { }
-	template<typename L>
-	point( const product<L,T>& expr ) : base_t( expr ) { }
-	template<typename L, typename R>
-	point( const difference<L,R,T>& expr ) : base_t( expr ) { }
+	template<typename E>
+	point( const expression_holder<E>& expr ) : base_t( expr ) { }
 	point( T x ) : base_t( x ) { }
 	point( T x, T y ) : base_t( x, y ) { }
 	point( T x, T y, T z ) : base_t( x, y, z ) { }
@@ -313,44 +298,6 @@ public:
 }; // End class point<T,4>
 
 
-// Specializations to compute expressions
-template<typename T, unsigned int D>
-class container<point<T,D>,T> {
-	const point<T,D>& m_obj;
-
-public:
-	container( const point<T,D>& obj ) : m_obj( obj ) { }
-	T operator [] ( unsigned int i ) const { return m_obj[i]; }
-};
-
-template<typename T>
-class container<point<T,2>,T> {
-	const point<T,2>& m_obj;
-
-public:
-	container( const point<T,2>& obj ) : m_obj( obj ) { }
-	T operator [] ( unsigned int i ) const { return m_obj[i]; }
-};
-
-template<typename T>
-class container<point<T,3>,T> {
-	const point<T,3>& m_obj;
-
-public:
-	container( const point<T,3>& obj ) : m_obj( obj ) { }
-	T operator [] ( unsigned int i ) const { return m_obj[i]; }
-};
-
-template<typename T>
-class container<point<T,4>,T> {
-	const point<T,4>& m_obj;
-
-public:
-	container( const point<T,4>& obj ) : m_obj( obj ) { }
-	T operator [] ( unsigned int i ) const { return m_obj[i]; }
-};
-
-
 // Various typedefs to make usage easier
 typedef point<float,2>         point2f;
 typedef point<float,3>         point3f;
@@ -360,8 +307,24 @@ typedef point<double,2>        point2d;
 typedef point<double,3>        point3d;
 typedef point<double,4>        point4d;
 
+typedef point<long double,2>   point2ld;
+typedef point<long double,3>   point3ld;
+typedef point<long double,4>   point4ld;
+
+#ifdef EUCLIB_DECIMAL_TYPES
+typedef point<decimal32,2>     point2d32;
+typedef point<decimal32,3>     point3d32;
+typedef point<decimal32,4>     point4d32;
+
+typedef point<decimal64,2>     point2d64;
+typedef point<decimal64,3>     point3d64;
+typedef point<decimal64,4>     point4d64;
+
+typedef point<decimal128,2>    point2d128;
+typedef point<decimal128,3>    point3d128;
+typedef point<decimal128,4>    point4d128;
+#endif
 
 }  // End namespace euclib
 
 #endif // EUBLIB_POINT_HPP
-

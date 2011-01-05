@@ -1,5 +1,5 @@
 /*
- *	Copyright (C) 2010 Jonathan Marini
+ *	Copyright (C) 2010-2011 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 #define GNUPLOT // I am testing this w/ gnuplot, so it should be in that format
 
 #include <iostream>
@@ -26,7 +27,8 @@
 #include <random>
 #include <algorithm>
 #include <functional>
-#include <time.h>
+#include <ctime>
+#include <typeinfo>
 
 #include "point.hpp"
 #include "vector.hpp"
@@ -35,6 +37,7 @@
 
 using namespace euclib;
 using namespace std;
+
 
 // Takes an optional seed as an argument (to recreate bugs)
 int main( int argc, char *argv[] ) {
@@ -57,6 +60,7 @@ int main( int argc, char *argv[] ) {
 
 	//////////////////////////////////////////
 	//  Testing
+
 
 	point2f pt1;				// default
 	point2f pt2 { 1.f, 3.f };	// list, same length
@@ -81,9 +85,9 @@ int main( int argc, char *argv[] ) {
 	     << "v4:  " << v4[0] << ", " << v4[1] << "\n";
 
 	vector2f v5 { pt1 };					// vector from point
-	vector2f v6 { 3.f * ( pt3 + pt4 ) };	// vector from point expression
+	vector2f v6 { ( pt3 + pt4 ) * 3.f };	// vector from point expression
 	point2f pt5 { v1 };						// point from vector
-	point2f pt6 { 2.f * ( v3 + v4 ) };		// point from vector expression
+	point2f pt6 { ( v3 + v4 ) * 2.f };		// point from vector expression
 	cout << "=== mixed ===\n"
 	     << "v5:  " << v5[0]  << ", " << v5[1]  << "\n"
 	     << "v6:  " << v6[0]  << ", " << v6[1]  << "\n"
