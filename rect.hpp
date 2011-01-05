@@ -1,6 +1,5 @@
-/*	rect.hpp  v 0.1.3.10.1117
- *
- *	Copyright (C) 2010 Jonathan Marini
+/*
+ *	Copyright (C) 2010-2011 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -82,17 +81,17 @@ public:
 
 	T  width( )  const { return r - l; }
 	T  height( ) const { return b - t; }
-	
+
 	point2<T> tl( ) const { return point2<T>( l, t ); }
 	point2<T> tr( ) const { return point2<T>( r, t ); }
 	point2<T> br( ) const { return point2<T>( r, b ); }
 	point2<T> bl( ) const { return point2<T>( l, b ); }
-	
+
 	line2<T> left( )   const { return line2<T>( tl( ), bl( ) ); }
 	line2<T> right( )  const { return line2<T>( tr( ), br( ) ); }
 	line2<T> top( )    const { return line2<T>( tl( ), tr( ) ); }
 	line2<T> bottom( ) const { return line2<T>( bl( ), br( ) ); }
-	
+
 	T area( )      const { return width( ) * height( ); }
 	T perimeter( ) const { return 2 * width( ) + 2 * height( ); }
 
@@ -110,7 +109,7 @@ private:
 			set_null( );
 		}
 	}
-	
+
 	void set_null( ) {
 		l = r = t = b = invalid;
 	}
@@ -126,7 +125,7 @@ public:
 		check_valid( );
 		return *this;
 	}
-	
+
 	rect2<T>& operator = ( rect2<T>&& rect ) {
 		l = rect.l;
 		r = rect.r;
@@ -141,7 +140,7 @@ public:
 		if( l == rect.l && r == rect.r && t == rect.t && b == rect.b ) {
 			return true;
 		}
-		
+
 		// checking for null equality
 		// a rect is null if any value is inf/max or if l > r or t > b
 		if( ( l == invalid || r == invalid ||
@@ -161,11 +160,11 @@ public:
 		}
 		return false;
 	}
-	
+
 	bool operator != ( const rect2<T>& rect ) const {
 		return !(*this == rect);
 	}
-	
+
 	friend std::ostream& operator << ( std::ostream& stream, const rect2<T>& rect ) {
 		#ifdef GNUPLOT
 			return stream << rect.l << " " << rect.t << "\n"
@@ -199,4 +198,3 @@ T rect2<T>::invalid = ( rect2<T>::limit_t::has_infinity ?
 }  // End namespace euclib
 
 #endif // EUBLIB_RECT_HPP
-

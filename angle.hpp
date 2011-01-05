@@ -1,6 +1,5 @@
-/*	angle.hpp  v 0.1.0.10.1220
- *
- *	Copyright (C) 2010 Jonathan Marini
+/*
+ *	Copyright (C) 2010-2011 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -60,7 +59,7 @@ public:
 		m_radians += degrees * EUCLIB_PI_180;
 		clamp( );
 	}
-	
+
 	void negate( ) {
 		m_radians *= -1;
 		clamp( );
@@ -84,4 +83,3 @@ private:
 }  // End namespace euclib
 
 #endif // EUBLIB_ANGLE_HPP
-

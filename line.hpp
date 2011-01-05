@@ -1,5 +1,5 @@
 /*
- *	Copyright (C) 2010 Jonathan Marini
+ *	Copyright (C) 2010-2011 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #ifndef EUBLIB_LINE_HPP
 #define EUBLIB_LINE_HPP
 
-#include <boost/type_traits/is_floating_point.hpp>
+#include "type_traits.hpp"
 #include "euclib_math.hpp"
 #include "point.hpp"
 #include "vector.hpp"
@@ -35,7 +35,8 @@ protected:
 
 	// This class can only be used with floating point types
 	//   soon, support will be added for fixed point types
-	static_assert( boost::is_floating_point<T>::value, "T must be floating point" );
+	static_assert( std::is_floating_point<T>::value || mpl::is_fixed_point<T>::value,
+	               "T must be floating point or fixed point decimal" );
 	static_assert( D != 0, "cannot have 0-dimensional object" );
 
 
@@ -215,4 +216,3 @@ typedef line<double,2>        line2d;
 }  // End namespace euclib
 
 #endif // EUBLIB_LINE_HPP
-

@@ -1,5 +1,5 @@
 /*
- *	Copyright (C) 2010 Jonathan Marini
+ *	Copyright (C) 2010-2011 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -384,4 +384,3 @@ typedef segment<double,2>        segment2d;
 }  // End namespace euclib
 
 #endif // EUBLIB_SEGMENT_HPP
-

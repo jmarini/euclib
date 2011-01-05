@@ -1,6 +1,5 @@
-/*	polygon.hpp  v 0.1.2.10.1118
- *
- *	Copyright (C) 2010 Jonathan Marini
+/*
+ *	Copyright (C) 2010-2011 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -125,7 +124,7 @@ public:
 
 	rect2<T> bounding_box( ) const { return m_bounding_box; }
 	unsigned int size( ) const { return m_hull.size( ); }
-	
+
 	template<typename... Points>
 	void add_points( const point2<T>& point, const Points&... points ) {
 		if( point != point2<T>::null( ) ) {
@@ -133,7 +132,7 @@ public:
 		}
 		add_points( points... );
 	}
-	
+
 	template<typename... Points>
 	void add_points( point2<T>&& point, Points&&... points ) {
 		if( point != point2<T>::null( ) ) {
@@ -163,7 +162,7 @@ public:
 	}
 
 private:
-	
+
 	void add_points( ) {
 		graham_hull( );
 		calc_bounding_box( );
@@ -178,7 +177,7 @@ private:
 	//       and all(?) the time on very large (>10000) datasets
 	void graham_hull( ) {
 		if( m_hull.size( ) < 3 ) { return; }
-		
+
 		// holds the points of the convex hull
 		std::vector<point2<T>> stack;
 		stack.reserve( m_hull.size( ) );
@@ -193,14 +192,14 @@ private:
 			         best->x - itr->x > limit_t::epsilon( ) ) {
 				best = itr;
 			}
-			
+
 		}
 
 		// sort points by angle
 		struct sort_angle {
 			public:
 				sort_angle( const point2<T>& pt ) : best( pt ) { }
-				
+
 				bool operator () ( const point2<T>& l, const point2<T>& r ) {
 					if( l == best ) { return true; }
 					else if( r == best ) { return false; }
@@ -224,7 +223,7 @@ private:
 		// these points are definitely in the hull
 		stack.push_back( *m_hull.begin( ) );
 		stack.push_back( *(m_hull.begin( ) + 1) );
-		
+
 		// move through all points
 		for( auto itr = m_hull.begin( ) + 2; itr != m_hull.end( ); ++itr ) {
 			if( stack.size( ) < 2 ) { stack.push_back( *itr ); }
@@ -250,7 +249,7 @@ private:
 				}
 			}
 		}
-		
+
 		m_hull = stack;
 	}
 
@@ -269,7 +268,7 @@ private:
 			else if( itr->x - r > limit_t::epsilon( ) ) {
 				r = itr->x;
 			}
-			
+
 			// y
 			if( t - itr->y > limit_t::epsilon( ) ) {
 				t = itr->y;
@@ -278,7 +277,7 @@ private:
 				b = itr->y;
 			}
 		}
-		
+
 		m_bounding_box = rect2<T>( l, r, t, b );
 	}
 
@@ -288,7 +287,7 @@ private:
 			set_null( );
 		}
 	}
-	
+
 	void set_null( ) {
 		m_bounding_box = rect2<T>::null( );
 	}
@@ -321,23 +320,23 @@ public:
 			return true;
 		}
 	}
-	
+
 	bool operator != ( const polygon2<T>& poly ) const {
 		return !(*this == poly);
 	}
-	
+
 	polygon2<T>& operator = ( const polygon2<T>& poly ) {
 		m_bounding_box = poly.m_bounding_box;
 		m_hull = poly.m_hull;
 		return *this;
 	}
-	
+
 	polygon2<T>& operator = ( polygon2<T>&& poly ) {
 		std::swap( m_bounding_box, poly.m_bounding_box );
 		std::swap( m_hull, poly.m_hull );
 		return *this;
 	}
-	
+
 	friend std::ostream& operator << ( std::ostream& stream, const polygon2<T>& poly ) {
 		#ifdef GNUPLOT
 			for( unsigned int i = 0; i < poly.m_hull.size( ); ++i ) {
@@ -372,4 +371,3 @@ T polygon2<T>::invalid = ( polygon2<T>::limit_t::has_infinity ?
 }  // End namespace euclib
 
 #endif // EUBLIB_POLYGON_HPP
-

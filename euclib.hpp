@@ -1,6 +1,5 @@
-/*  euclib.hpp  v 1.0.10.1117
- *
- *	Copyright (C) 2010 Jonathan Marini
+/*
+ *	Copyright (C) 2010-2011 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -20,12 +19,10 @@
 #ifndef EUBLIB_HPP
 #define EUCLIB_HPP
 
+#include "angle.hpp"
 #include "point.hpp"
+#include "vector.hpp"
 #include "line.hpp"
 #include "segment.hpp"
-#include "rect.hpp"
-#include "polygon.hpp"
-#include "euclib_helper.hpp"
 
 #endif // EUBLIB_HPP
-
