@@ -34,19 +34,13 @@ struct is_fixed_point {
 #ifdef EUCLIB_DECIMAL_TYPES
 
 template<>
-struct is_fixed_point<std::decimal::decimal32> {
-	enum { value = 1 };
-};
+struct is_fixed_point<std::decimal::decimal32> { enum { value = 1 }; };
 
 template<>
-struct is_fixed_point<std::decimal::decimal64> {
-	enum { value = 1 };
-};
+struct is_fixed_point<std::decimal::decimal64> { enum { value = 1 }; };
 
 template<>
-struct is_fixed_point<std::decimal::decimal128> {
-	enum { value = 1 };
-};
+struct is_fixed_point<std::decimal::decimal128> { enum { value = 1 }; };
 
 #endif
 
