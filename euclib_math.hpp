@@ -87,14 +87,14 @@ inline bool equal( T lhs, T rhs ) {
 
 	template< >
 	inline bool equal<float>( float lhs, float rhs ) {
-		return lhs == rhs || std::abs( lhs - rhs ) <= std::numeric_limits<float>::epsilon( ) *
-		                                              ( std::abs(lhs) + std::abs(rhs) + 1.f );
+		return std::abs( lhs - rhs ) <= std::numeric_limits<float>::epsilon( ) *
+		                                ( std::abs(lhs) + std::abs(rhs) + 1.f );
 	}
 
 	template< >
 	inline bool equal<double>( double lhs, double rhs ) {
-		return lhs == rhs || std::abs( lhs - rhs ) <= std::numeric_limits<double>::epsilon( ) *
-		                                              ( std::abs(lhs) + std::abs(rhs) + 1.0 );
+		return std::abs( lhs - rhs ) <= std::numeric_limits<double>::epsilon( ) *
+		                                ( std::abs(lhs) + std::abs(rhs) + 1.0 );
 	}
 
 template<typename T>

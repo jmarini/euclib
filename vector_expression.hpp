@@ -82,7 +82,7 @@ private:
 // Constructors
 protected:
 	expression_holder( ) { }
-	~expression_holder( ) { }
+	virtual ~expression_holder( ) { }
 };
 
 ////////////////////////////////////////

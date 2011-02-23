@@ -58,8 +58,7 @@ protected:
 
 
 // Constructors
-//protected: // cannot construct directly
-public: // TEMP
+protected: // cannot construct directly
 
 	point_base( ) { }
 	point_base( const point_base<T,D>& pt ) { *this = pt; }
@@ -72,6 +71,9 @@ public: // TEMP
 		               "too many arguments to constructor" );
 		fill( 0, value, values... );
 	}
+
+	virtual ~point_base( ) { }
+
 
 // Methods
 public:
@@ -114,19 +116,6 @@ public:
 		return m_data[i];
 	}
 
-	bool operator == ( const point_base<T,D>& pt ) const {
-		for( std::size_t i = 0; i < D; ++i ) {
-			if( !equal( m_data[i], pt[i] ) ) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	bool operator != ( const point_base<T,D>& pt ) const {
-		return !(*this == pt);
-	}
-
 	point_base<T,D>& operator = ( const point_base<T,D>& pt ) {
 		m_data = pt.m_data;
 		return *this;
@@ -166,6 +155,23 @@ public:
 	}
 
 }; // End class point_base<T,D>
+
+
+template<typename T, std::size_t D>
+bool operator == ( const point_base<T,D>& lhs, const point_base<T,D>& rhs ) {
+	for( std::size_t i = 0; i < D; ++i ) {
+		if( !equal( lhs[i], rhs[i] ) ) {
+			return false;
+		}
+	}
+	return true;
+}
+
+template<typename T, std::size_t D>
+bool operator != ( const point_base<T,D>& lhs, const point_base<T,D>& rhs ) {
+	return !(lhs == rhs);
+}
+
 
 
 template<typename T, std::size_t D>

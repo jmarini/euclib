@@ -41,17 +41,17 @@ using namespace std;
 
 // Takes an optional seed as an argument (to recreate bugs)
 int main( int argc, char *argv[] ) {
-	int seed = time(NULL); // default seed
+	int seed = static_cast<int>( time( NULL ) ); // default seed
 	if( argc == 2 ) {
 		seed = atoi(argv[1]);
 	}
 
 	// min and max values when plotting
-	int max = 10;
+	float max = 10.f;
 
 	// random number unif_gen
-	uniform_real_distribution<float> unif_distr(0, max);
-	normal_distribution<float> norm_distr( max/2, max/10 );
+	uniform_real_distribution<float> unif_distr(0.f, max);
+	normal_distribution<float> norm_distr( max/2.f, max/10.f );
 	mt19937 engine( seed );
 	auto unif = bind(unif_distr, engine);
 	auto norm = bind(norm_distr, engine);

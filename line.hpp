@@ -56,6 +56,7 @@ protected: // cannot construct directly
 	line_base( const point<T,D>& pt1, const point<T,D>& pt2 ) : m_point(pt1), m_vector(pt2 - pt1) { }
 	line_base( const point<T,D>& pt, const vector<T,D>& vec ) : m_point( pt ), m_vector( vec ) { }
 
+	virtual ~line_base( ) { }
 
 // Methods
 public:
