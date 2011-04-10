@@ -224,7 +224,7 @@ public:
 	T   x( ) const { return base_t::m_data[0]; }
 	T   y( ) const { return base_t::m_data[1]; }
 
-	const T* to_gl( ) const { return base_t::m_data.data( ); }
+	const T* c_ptr( ) const { return base_t::m_data.data( ); }
 
 }; // End class point<T,2>
 
@@ -260,7 +260,7 @@ public:
 	T   y( ) const { return base_t::m_data[1]; }
 	T   z( ) const { return base_t::m_data[2]; }
 
-	const T* to_gl( ) const { return base_t::m_data.data( ); }
+	const T* c_ptr( ) const { return base_t::m_data.data( ); }
 
 }; // End class point<T,3>
 
@@ -299,7 +299,7 @@ public:
 	T   z( ) const { return base_t::m_data[2]; }
 	T   w( ) const { return base_t::m_data[3]; }
 
-	const T* to_gl( ) const { return base_t::m_data.data( ); }
+	const T* c_ptr( ) const { return base_t::m_data.data( ); }
 
 }; // End class point<T,4>
 
@@ -334,3 +334,4 @@ typedef point<decimal128,4>    point4d128;
 }  // End namespace euclib
 
 #endif // EUBLIB_POINT_HPP
+

@@ -58,22 +58,28 @@ public:
 
 	vector<T,D> normalize( ) const {
 		vector<T,D> result;
-		T length = length( );
+		T len = length( );
 
-		for( std::size_t i = 0; i < D; ++i ) {
-			result[i] = base_t::m_data[i] / length;
-		}
+		std::transform( base_t::m_data.begin( ), base_t::m_data.end( ), result.begin( ),
+				[&len]( const T& t ) {
+					return t / len;
+				}
+		);
+
 		return result;
 	}
 
 	void normalize_in_place( ) {
-		T length = length( );
-		for( std::size_t i = 0; i < D; ++i ) {
-			base_t::m_data[i] /= length;
-		}
+		T len = length( );
+
+		std::transform( base_t::m_data.begin( ), base_t::m_data.end( ), base_t::m_data.begin( ),
+				[&len]( const T& t ) {
+					return t / len;
+				}
+		);
 	}
 
-	T dot( const vector<T,D>& v ) {
+	T dot( const vector<T,D>& v ) const {
 		T sum = 0;
 		for( std::size_t i = 0; i < D; ++i ) {
 			sum += base_t::m_data[i] * v.m_data[i];
@@ -84,12 +90,12 @@ public:
 	inline T length( ) const { return sqrt( length_sq( ) ); }
 
 	inline T length_sq( ) const {
-		T length = 0;
+		T len = 0;
 		for( std::size_t i = 0; i < D; ++i ) {
-			length += base_t::m_data[i] * base_t::m_data[i];
-			assert( length > base_t::m_data[i] ); // quick code to catch some overflows
+			len += base_t::m_data[i] * base_t::m_data[i];
+			assert( len > base_t::m_data[i] ); // quick code to catch some overflows
 		}
-		return length;
+		return len;
 	}
 
 }; // End class vector<T,D>
@@ -127,22 +133,21 @@ public:
 	T   x( ) const { return base_t::m_data[0]; }
 	T   y( ) const { return base_t::m_data[1]; }
 
-
 	vector<T,2> normalize( ) const {
-		T length = length( );
+		T len = length( );
 		return vector<T,2> {
-		    base_t::m_data[0] / length,
-		    base_t::m_data[1] / length
+		    base_t::m_data[0] / len,
+		    base_t::m_data[1] / len
 		};
 	}
 
 	void normalize_in_place( ) {
-		T length = length( );
-		base_t::m_data[0] /= length;
-		base_t::m_data[1] /= length;
+		T len = length( );
+		base_t::m_data[0] /= len;
+		base_t::m_data[1] /= len;
 	}
 
-	T dot( const vector<T,2>& v ) {
+	T dot( const vector<T,2>& v ) const {
 		return base_t::m_data[0] * v.m_data[0] + base_t::m_data[1] * v.m_data[1];
 	}
 
@@ -157,7 +162,7 @@ public:
 		       base_t::m_data[1] * base_t::m_data[1];
 	}
 
-	const T* to_gl( ) const { return base_t::m_data.data( ); }
+	const T* c_ptr( ) const { return base_t::m_data.data( ); }
 
 // Operators
 public:
@@ -214,24 +219,23 @@ public:
 	T   y( ) const { return base_t::m_data[1]; }
 	T   z( ) const { return base_t::m_data[2]; }
 
-
 	vector<T,3> normalize( ) const {
-		T length = length( );
+		T len = length( );
 		return vector<T,3> {
-		    base_t::m_data[0] / length,
-		    base_t::m_data[1] / length,
-		    base_t::m_data[2] / length
+		    base_t::m_data[0] / len,
+		    base_t::m_data[1] / len,
+		    base_t::m_data[2] / len
 		};
 	}
 
 	void normalize_in_place( ) {
-		T length = length( );
-		base_t::m_data[0] /= length;
-		base_t::m_data[1] /= length;
-		base_t::m_data[2] /= length;
+		T len = length( );
+		base_t::m_data[0] /= len;
+		base_t::m_data[1] /= len;
+		base_t::m_data[2] /= len;
 	}
 
-	T dot( const vector<T,3>& v ) {
+	T dot( const vector<T,3>& v ) const {
 		return base_t::m_data[0] * v.m_data[0] +
 		       base_t::m_data[1] * v.m_data[1] +
 		       base_t::m_data[2] * v.m_data[2];
@@ -248,10 +252,12 @@ public:
 		return result;
 	}
 
+	// this x ( v1 x v2 )
 	vector<T,3> vector_triple( const vector<T,3>& v1, const vector<T,3>& v2 ) const {
 		return this->cross( v1.cross( v2 ) );
 	}
 
+	// this . ( v1 x v2 )
 	T vector_scalar( const vector<T,3>& v1, const vector<T,3>& v2 ) const {
 		return this->dot( v1.cross( v2 ) );
 	}
@@ -264,14 +270,16 @@ public:
 		       base_t::m_data[2] * base_t::m_data[2];
 	}
 
-	const T* to_gl( ) const { return base_t::m_data.data( ); }
+	const T* c_ptr( ) const { return base_t::m_data.data( ); }
 
 }; // End class vector<T,3>
 
 
+// v1 x ( v2 x v3 )
 template<typename T>
 vector<T,3> vector_triple( const vector<T,3>& v1, const vector<T,3>& v2, const vector<T,3>& v3 ) { return v1.cross( v2.cross( v3 ) ); }
 
+// v1 . ( v2 x v3 )
 template<typename T>
 T scalar_triple( const vector<T,3>& v1, const vector<T,3>& v2, const vector<T,3>& v3 ) { return v1.dot( v2.cross( v3 ) ); }
 
@@ -316,26 +324,25 @@ public:
 	T   z( ) const { return base_t::m_data[2]; }
 	T   w( ) const { return base_t::m_data[3]; }
 
-
 	vector<T,4> normalize( ) const {
-		T length = length( );
+		T len = length( );
 		return vector<T,4> {
-		    base_t::m_data[0] / length,
-		    base_t::m_data[1] / length,
-		    base_t::m_data[2] / length,
-		    base_t::m_data[3] / length
+		    base_t::m_data[0] / len,
+		    base_t::m_data[1] / len,
+		    base_t::m_data[2] / len,
+		    base_t::m_data[3] / len
 		};
 	}
 
 	void normalize_in_place( ) {
-		T length = length( );
-		base_t::m_data[0] /= length;
-		base_t::m_data[1] /= length;
-		base_t::m_data[2] /= length;
-		base_t::m_data[3] /= length;
+		T len = length( );
+		base_t::m_data[0] /= len;
+		base_t::m_data[1] /= len;
+		base_t::m_data[2] /= len;
+		base_t::m_data[3] /= len;
 	}
 
-	T dot( const vector<T,4>& v ) {
+	T dot( const vector<T,4>& v ) const {
 		return base_t::m_data[0] * v.m_data[0] +
 		       base_t::m_data[1] * v.m_data[1] +
 		       base_t::m_data[2] * v.m_data[2] +
@@ -351,7 +358,7 @@ public:
 		       base_t::m_data[3] * base_t::m_data[3];
 	}
 
-	const T* to_gl( ) const { return base_t::m_data.data( ); }
+	const T* c_ptr( ) const { return base_t::m_data.data( ); }
 
 }; // End class vector<T,4>
 
