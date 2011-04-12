@@ -11,17 +11,20 @@ about:
 	Generic 2D geometry library providing points, lines, polygons, and many
 	helper functions including (when it's done) transformations, combinations,
 	and intersections.
+	Since the library is far from complete, expect sudden changes in interface
+	and use until finalization of those aspects.
 	
 note on compilation:
 	This project is partially an exploration of the new C++0x language features
-	by myself, and thus this project extensively uses C++0x constructs and
-	language features, most notably:
+	by myself, as well as an exploration into generic library design and thus this
+	project extensively uses C++0x constructs and language features, most notably:
 		rvalue references
 		variadic templates
 		static_assert
 		intializer lists
 		auto
-	Make sure you are using at least gcc 4.5 with the -std=c++0x flag or a
+		nullptr
+	Make sure you are using at least gcc 4.6 with the -std=c++0x flag or a
 	compiler that will support these features.  Additionally, I am using some
 	boost dependencies so having boost installed to <boost/...> is required.
 
