@@ -23,7 +23,6 @@
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/less_equal.hpp>
 #include <boost/mpl/sizeof.hpp>
-#include <boost/utility/enable_if.hpp>
 
 #include "type_traits.hpp"
 
@@ -48,9 +47,9 @@ namespace euclib {
 namespace mpl {
 	template<typename T1, typename T2>
 	struct promotion_ {
-		static_assert( (std::is_arithmetic<T1>::value || mpl::is_fixed_point<T1>::value) &&
-		               (std::is_arithmetic<T2>::value || mpl::is_fixed_point<T2>::value),
-		               "T1 and T2 must be integral, floating point, or fixed point types" );
+		static_assert( (std::is_arithmetic<T1>::value || mpl::is_decimal<T1>::value) &&
+		               (std::is_arithmetic<T2>::value || mpl::is_decimal<T2>::value),
+		               "T1 and T2 must be integral, floating point, or decimal types" );
 
 		// Choose the type that is bigger when promoting
 		typedef typename boost::mpl::if_< boost::mpl::less_equal< boost::mpl::sizeof_<T1>,
@@ -91,8 +90,8 @@ protected:
 
 template<typename T>
 class scalar : public expression_holder<scalar<T>> {
-	static_assert( std::is_floating_point<T>::value || mpl::is_fixed_point<T>::value,
-	               "T must be floating point or fixed point decimal" );
+	static_assert( std::is_floating_point<T>::value || mpl::is_decimal<T>::value,
+	               "T must be floating point or decimal" );
 // Variables
 	const T m_value;
 
@@ -148,7 +147,6 @@ inline vector_addition<L,R> operator + ( const expression_holder<L>& lhs, const 
 
 ////////////////////////////////////////
 // Expr - Expr subtraction
-
 
 template<typename L, typename R>
 class vector_subtraction : public expression_holder<vector_subtraction<L,R>> {
@@ -210,21 +208,21 @@ inline vector_multiplication<L,R> operator * ( const expression_holder<L>& lhs,
 }
 
 // Scalar multiplication
-// TODO: convert to typename L::value_t if not floating or fixed point
+// TODO: convert to typename L::value_t if not floating or decimal
 template<typename L, typename R>
 inline
-typename boost::enable_if_c< (std::is_floating_point<L>::value || mpl::is_fixed_point<L>::value),
-                           vector_multiplication<scalar<L>,R>
-                           >::type
+typename std::enable_if< (std::is_floating_point<L>::value || mpl::is_decimal<L>::value),
+                       vector_multiplication<scalar<L>,R>
+					   >::type
 operator * ( L lhs, const expression_holder<R>& rhs ) {
 	return vector_multiplication<scalar<L>,R>( scalar<L>(lhs), rhs );
 }
 
 template<typename L, typename R>
 inline
-typename boost::enable_if_c< (std::is_floating_point<R>::value || mpl::is_fixed_point<R>::value),
-                           vector_multiplication<L,scalar<R>>
-                           >::type
+typename std::enable_if< (std::is_floating_point<R>::value || mpl::is_decimal<R>::value),
+                       vector_multiplication<L,scalar<R>>
+                       >::type
 operator * ( const expression_holder<L>& lhs, R rhs ) {
 	return vector_multiplication<L,scalar<R>>( lhs, scalar<R>(rhs) );
 }
@@ -233,3 +231,4 @@ operator * ( const expression_holder<L>& lhs, R rhs ) {
 } // End namespace euclib
 
 #endif // EUBLIB_VECTOR_EXPRESSION_HPP
+

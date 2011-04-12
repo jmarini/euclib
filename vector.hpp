@@ -366,44 +366,6 @@ public:
 template<typename T>
 T dot( const vector<T,4>& v1, const vector<T,4>& v2 ) { return v1.dot( v2 ); }
 
-/*
-// Specializations to compute expressions
-template<typename T, unsigned int D>
-class container<vector<T,D>,T> {
-	const vector<T,D>& m_obj;
-
-public:
-	container( const vector<T,D>& obj ) : m_obj( obj ) { }
-	T operator [] ( unsigned int i ) const { return m_obj[i]; }
-};
-
-template<typename T>
-class container<vector<T,2>,T> {
-	const vector<T,2>& m_obj;
-
-public:
-	container( const vector<T,2>& obj ) : m_obj( obj ) { }
-	T operator [] ( unsigned int i ) const { return m_obj[i]; }
-};
-
-template<typename T>
-class container<vector<T,3>,T> {
-	const vector<T,3>& m_obj;
-
-public:
-	container( const vector<T,3>& obj ) : m_obj( obj ) { }
-	T operator [] ( unsigned int i ) const { return m_obj[i]; }
-};
-
-template<typename T>
-class container<vector<T,4>,T> {
-	const vector<T,4>& m_obj;
-
-public:
-	container( const vector<T,4>& obj ) : m_obj( obj ) { }
-	T operator [] ( unsigned int i ) const { return m_obj[i]; }
-};
-*/
 
 // Various typedefs to make usage easier
 typedef vector<float,2>       vector2f;
@@ -435,3 +397,4 @@ typedef vector<decimal128,4>  vector4d128;
 }  // End namespace euclib
 
 #endif // EUCLIB_VECTOR_HPP
+

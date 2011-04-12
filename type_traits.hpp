@@ -27,20 +27,20 @@
 namespace euclib { namespace mpl {
 
 template<typename T>
-struct is_fixed_point {
+struct is_decimal {
 	enum { value = 0 };
 };
 
 #ifdef EUCLIB_DECIMAL_TYPES
 
 template<>
-struct is_fixed_point<std::decimal::decimal32> { enum { value = 1 }; };
+struct is_decimal<std::decimal::decimal32> { enum { value = 1 }; };
 
 template<>
-struct is_fixed_point<std::decimal::decimal64> { enum { value = 1 }; };
+struct is_decimal<std::decimal::decimal64> { enum { value = 1 }; };
 
 template<>
-struct is_fixed_point<std::decimal::decimal128> { enum { value = 1 }; };
+struct is_decimal<std::decimal::decimal128> { enum { value = 1 }; };
 
 #endif
 
@@ -55,3 +55,4 @@ typedef std::decimal::decimal128 decimal128;
 } // End namespace euclib
 
 #endif // EUCLIB_TYPE_TRAITS_HPP
+
