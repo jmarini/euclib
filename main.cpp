@@ -2,16 +2,16 @@
  *	Copyright (C) 2010-2011 Jonathan Marini
  *
  *	This program is free software: you can redistribute it and/or modify
- *	it under the terms of the GNU General Public License as published by
+ *	it under the terms of the GNU Lesser General Public License as published by
  *	the Free Software Foundation, either version 3 of the License, or
  *	(at your option) any later version.
  *
  *	This program is distributed in the hope that it will be useful,
  *	but WITHOUT ANY WARRANTY; without even the implied warranty of
  *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *	GNU General Public License for more details.
+ *	GNU Lesser General Public License for more details.
  *
- *	You should have received a copy of the GNU General Public License
+ *	You should have received a copy of the GNU Lesser General Public License
  *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
@@ -61,7 +61,7 @@ int main( int argc, char *argv[] ) {
 	//////////////////////////////////////////
 	//  Testing
 
-
+	// Points
 	point2f pt1;				// default
 	point2f pt2 { 1.f, 3.f };	// list, same length
 	point2f pt3 { pt2 };		// copy
@@ -73,14 +73,20 @@ int main( int argc, char *argv[] ) {
 	     << "pt3: " << pt3[0] << ", " << pt3[1] << "\n"
 	     << "pt4: " << pt4[0] << ", " << pt4[1] << "\n";
 
+	// Vectors
 	vector2f v1;				// default
 	vector2f v2 { 5.f, 6.f };	// list, same length
+	vector2f v2n = v2;
+	v2n.normalize_in_place( );
+	const float *v2p = v2.c_ptr( );
 	vector2f v3 { v2 };			// copy
 	vector2f v4 { 1.f };		// list, too short
 	v1 = 2.f * ( v3 + v4 );		// expression
 	cout << "=== vector ===\n"
 	     << "v1:  " << v1[0] << ", " << v1[1] << "\n"
 	     << "v2:  " << v2[0] << ", " << v2[1] << "\n"
+		 << "v2n: " << v2n[0] << ", " << v2n[1] << "\n"
+		 << "v2p: " << v2p[0] << ", " << v2p[1] << "\n"
 	     << "v3:  " << v3[0] << ", " << v3[1] << "\n"
 	     << "v4:  " << v4[0] << ", " << v4[1] << "\n";
 
@@ -94,6 +100,7 @@ int main( int argc, char *argv[] ) {
 	     << "pt5: " << pt5[0] << ", " << pt5[1] << "\n"
 	     << "pt6: " << pt6[0] << ", " << pt6[1] << "\n";
 
+	// Lines
 	line2f l1;				// default
 	line2f l2 { pt2, pt1 };	// point, point
 	line2f l3 { pt2, v2 };	// point, vector
@@ -108,6 +115,7 @@ int main( int argc, char *argv[] ) {
 	     << "l4:  " << l4.base_point( )[0] << ", " << l4.base_point( )[1]
 	     << "    " << l4.base_vector( )[0] << ", " << l4.base_vector( )[1] << "\n";
 
+	// Segments
 	segment2f s1;				// default
 	segment2f s2 { pt2, pt1 };	// point, point
 	segment2f s3 { pt2, v2 };	// point, vector
@@ -122,6 +130,7 @@ int main( int argc, char *argv[] ) {
 	     << "s4:  " << s4.base_point( )[0] << ", " << s4.base_point( )[1]
 	     << "    " << s4.base_vector( )[0] << ", " << s4.base_vector( )[1] << "\n";
 
+	// Line/Segment interchange
 	line2f l5 { s2 };		// line from segment
 	segment2f s5 { l2 };	// segment from line
 	cout << "=== mixed ===\n"
