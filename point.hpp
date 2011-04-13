@@ -37,8 +37,9 @@ protected:
 	// This class can only be used with floating point types
 	//   soon, support will be added for fixed point types
 	static_assert( std::is_floating_point<T>::value || mpl::is_decimal<T>::value,
-	               "T must be floating point or fixed point decimal" );
-	static_assert( D != 0, "cannot have 0-dimensional object" );
+	               "T must be floating point or decimal" );
+	static_assert( D != 0, "Cannot have 0-dimensional object" );
+	static_assert( limit_t::is_specialized, "T must specialize std::numeric_limits" );
 
 
 public:
