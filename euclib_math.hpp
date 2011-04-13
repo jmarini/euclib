@@ -24,6 +24,8 @@
 #include <cassert>
 #include <cmath>
 
+#include "type_traits.hpp"
+
 namespace euclib {
 
 ////////////////////////////////////////
@@ -79,30 +81,25 @@ namespace euclib {
 // Helper functions for comparisons, because no assumptions
 //   can be made about the exactness of type T
 
-// TODO: use traits to automatically use floating version or integer version
-
 template<typename T>
-inline bool equal( T lhs, T rhs ) {
-	return lhs == rhs;
-}
+inline bool equal( T lhs, T rhs );
 
-	template< >
-	inline bool equal<float>( float lhs, float rhs ) {
-		return std::abs( lhs - rhs ) <= std::numeric_limits<float>::epsilon( ) *
-		                                ( std::abs(lhs) + std::abs(rhs) + 1.f );
-	}
-
-	template< >
-	inline bool equal<double>( double lhs, double rhs ) {
-		return std::abs( lhs - rhs ) <= std::numeric_limits<double>::epsilon( ) *
+	template<typename T>
+	inline bool equal( T lhs, T rhs, mpl::inaccurate_tag ) {
+		return std::abs( lhs - rhs ) <= std::numeric_limits<T>::epsilon( ) *
 		                                ( std::abs(lhs) + std::abs(rhs) + 1.0 );
 	}
 
-	template< >
-	inline bool equal<long double>( long double lhs, long double rhs ) {
-		return std::abs( lhs - rhs ) <= std::numeric_limits<long double>::epsilon( ) *
-		                                ( std::abs(lhs) + std::abs(rhs) + 1.0L );
+	template<typename T>
+	inline bool equal( T lhs, T rhs, mpl::accurate_tag ) {
+		return lhs == rhs;
 	}
+
+	template<typename T>
+	inline bool equal( T lhs, T rhs ) {
+		return equal( lhs, rhs, typename mpl::accuracy_traits<T>::category_t( ) );
+	}
+
 
 template<typename T>
 inline bool not_equal( T lhs, T rhs ) {
@@ -110,27 +107,24 @@ inline bool not_equal( T lhs, T rhs ) {
 }
 
 template<typename T>
-inline bool less_than( T lhs, T rhs ) {
-	return lhs < rhs;
-}
+inline bool less_than( T lhs, T rhs );
 
-	template< >
-	inline bool less_than<float>( float lhs, float rhs ) {
-		return rhs - lhs > std::numeric_limits<float>::epsilon( ) *
-		                   ( std::abs(lhs) + std::abs(rhs) + 1.f );
-	}
-
-	template< >
-	inline bool less_than<double>( double lhs, double rhs ) {
-		return rhs - lhs > std::numeric_limits<double>::epsilon( ) *
+	template<typename T>
+	inline bool less_than( T lhs, T rhs, mpl::inaccurate_tag ) {
+		return rhs - lhs > std::numeric_limits<T>::epsilon( ) *
 		                   ( std::abs(lhs) + std::abs(rhs) + 1.0 );
 	}
 
-	template< >
-	inline bool less_than<long double>( long double lhs, long double rhs ) {
-		return rhs - lhs > std::numeric_limits<long double>::epsilon( ) *
-		                   ( std::abs(lhs) + std::abs(rhs) + 1.0L );
+	template<typename T>
+	inline bool less_than( T lhs, T rhs, mpl::accurate_tag ) {
+		return lhs < rhs;
 	}
+
+	template<typename T>
+	inline bool less_than( T lhs, T rhs ) {
+		return less_than( lhs, rhs, typename mpl::accuracy_traits<T>::category_t( ) );
+	}
+
 
 template<typename T>
 inline bool greater_than( T lhs, T rhs ) {
@@ -138,16 +132,17 @@ inline bool greater_than( T lhs, T rhs ) {
 }
 
 template<typename T>
-inline bool less_equal( T lhs, T rhs ) {
+inline bool less_than_eq( T lhs, T rhs ) {
 	return !(rhs < lhs);
 }
 
 template<typename T>
-inline bool greater_equal( T lhs, T rhs ) {
+inline bool greater_than_eq( T lhs, T rhs ) {
 	return !(lhs < rhs);
 }
 
 
+// TODO: change to two versions (floating/decimal or integer)
 template<typename T>
 void round_nearest( long double& value ) {
 	if( std::numeric_limits<T>::is_integer ) { // make sure it rounds to nearest when cast to T

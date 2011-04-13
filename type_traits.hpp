@@ -31,14 +31,32 @@ struct is_decimal {
 	enum { value = 0 };
 };
 
+struct inaccurate_tag { };
+struct accurate_tag { };
+
+template<typename T>
+struct accuracy_traits { typedef accurate_tag category_t; };
+
+template< >
+struct accuracy_traits<float> { typedef inaccurate_tag category_t; };
+template< >
+struct accuracy_traits<double> { typedef inaccurate_tag category_t; };
+template< >
+struct accuracy_traits<long double> { typedef inaccurate_tag category_t; };
+
 #ifdef EUCLIB_DECIMAL_TYPES
+
+template< >
+struct accuracy_traits<std::decimal::decimal32> { typedef accurate_tag category_t; };
+template< >
+struct accuracy_traits<std::decimal::decimal64> { typedef accurate_tag category_t; };
+template< >
+struct accuracy_traits<std::decimal::decimal128> { typedef accurate_tag category_t; };
 
 template<>
 struct is_decimal<std::decimal::decimal32> { enum { value = 1 }; };
-
 template<>
 struct is_decimal<std::decimal::decimal64> { enum { value = 1 }; };
-
 template<>
 struct is_decimal<std::decimal::decimal128> { enum { value = 1 }; };
 
