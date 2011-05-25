@@ -72,6 +72,8 @@ public:
 } // End namespace detail
 
 
+
+
 //
 // Generic vector<T,D> for D > 4
 //
@@ -279,7 +281,7 @@ public:
 	vector( const array_type& data )
 		: x(data[0]), y(data[1]) { }
 	vector( array_type&& data ) {
-		std::swap(x,data.x), std::swap(y,data.y);
+		std::swap(x,data[0]), std::swap(y,data[1]);
 	}
 
 	vector( value_type first = value_type( ), value_type second = value_type( ) )
@@ -358,9 +360,300 @@ public:
 	// expression assignment
 
 
-};
+}; // End class vector<T,2>
 
 
+
+
+//
+// vector<T,3>, with (x,y,z)(r,g,b)(s,t,p) accessors
+//
+template<typename T>
+class vector<T,3> : public detail::vector_base<T,3> {
+// Typedefs
+private:
+
+	typedef detail::vector_base<T,3>        base_type;
+	typedef typename base_type::limit_type  limit_type;
+	typedef vector<T,3>                     data_type;
+	typedef std::array<T,3>                 array_type;
+
+
+public:
+
+	typedef typename base_type::value_type              value_type;
+	typedef typename base_type::pointer                 pointer;
+	typedef typename base_type::const_pointer           const_pointer;
+	typedef typename base_type::reference               reference;
+	typedef typename base_type::const_reference         const_reference;
+	typedef typename base_type::iterator                iterator;
+	typedef typename base_type::const_iterator          const_iterator;
+	typedef typename base_type::reverse_iterator        reverse_iterator;
+	typedef typename base_type::const_reverse_iterator  const_reverse_iterator;
+	typedef typename base_type::size_type               size_type;
+	typedef typename base_type::difference_type         difference_type;
+
+
+// Variables
+public:
+
+	union { value_type  x, r, s; };
+	union { value_type  y, g, t; };
+	union { value_type  z, b, p; };
+
+
+// Constructors
+public:
+
+	vector( const data_type& vec ) { *this = vec; }
+	vector( data_type&& vec ) { *this = std::move(vec); }
+
+	vector( const vector<T,2>& vec, value_type third )
+		: x(vec.x), y(vec.y), z(third) { }
+	vector( value_type first, const vector<T,2>& vec )
+		: x(first), y(vec.x), z(vec.y) { }
+	
+	vector( const array_type& data )
+		: x(data[0]), y(data[1]), z(data[2]) { }
+	vector( array_type&& data ) {
+		std::swap(x,data[0]), std::swap(y,data[1]); std::swap(z,data[2]);
+	}
+
+	vector( value_type first = value_type( ), value_type second = value_type( ),
+	        value_type third = value_type( ) )
+		: x(first), y(second), z(third) { }
+
+	// expression constructor ...
+
+
+// Methods
+public:
+
+	data_type  normalize( ) const {
+		data_type vec = *this;
+		value_type len = length( );
+		vec.x /= len;
+		vec.y /= len;
+		vec.z /= len;
+		return vec;
+	}
+	void       normalize_ip( ) {
+		value_type len = length( );
+		x /= len;
+		y /= len;
+		z /= len;
+	}
+
+	value_type  inner_product( ) const { return length_sq( ); }
+	value_type  scalar_product( ) const { return inner_product( ); }
+	value_type  dot( ) const { return inner_product( ); }
+
+	
+	value_type  length( ) const { return std::sqrt( length_sq( ) ); }
+	value_type  length_sq( ) const {
+		return x * x + y * y + z * z;
+	}
+
+	pointer        data( ) { return &x; }
+	const_pointer  data( ) const { return &x; }
+
+	void  fill( const_reference value ) { x = value; y = value; z = value; }
+	void  swap( data_type& vec ) {
+		std::swap( x, vec.x );
+		std::swap( y, vec.y );
+		std::swap( z, vec.z );
+	}
+
+	// iterators...
+	iterator                begin( ) { return iterator( &x ); }
+	const_iterator          begin( ) const { return const_iterator( &x ); }
+	iterator                end( ) { return iterator( &(&x)[3] ); }
+	const_iterator          end( ) const { return const_iterator( &(&x)[3] ); }
+
+	reverse_iterator        rbegin( ) { return reverse_iterator(end( )); }
+	const_reverse_iterator  rbegin( ) const { return const_reverse_iterator(end( )); }
+	reverse_iterator        rend( ) { return reverse_iterator(begin( )); }
+	const_reverse_iterator  rend( ) const { return const_reverse_iterator(begin( )); }
+
+	const_iterator          cbegin( ) const { return const_iterator( &x ); }
+	const_iterator          cend( ) const { return const_iterator( &(&x)[3] ); }
+	const_reverse_iterator  crbegin( ) const { return const_reverse_iterator(end( )); }
+	const_reverse_iterator  crend( ) const { return const_reverse_iterator(begin( )); }
+
+
+// Operators
+public:
+
+	reference        operator [] ( size_type i ) { return (&x)[i]; }
+	const_reference  operator [] ( size_type i ) const { return (&x)[i]; }
+
+	data_type&  operator = ( const data_type& vec ) {
+		x = vec.x;
+		y = vec.y;
+		z = vec.z;
+		return *this;
+	}
+	data_type&  operator = ( data_type&& vec ) {
+		swap( *this, vec );
+		return *this;
+	}
+	// expression assignment
+
+
+}; // End class vector<T,3>
+
+
+
+
+//
+// vector<T,4>, with (x,y,z,w)(r,g,b,a)(s,t,p,q) accessors
+//
+template<typename T>
+class vector<T,4> : public detail::vector_base<T,4> {
+// Typedefs
+private:
+
+	typedef detail::vector_base<T,4>        base_type;
+	typedef typename base_type::limit_type  limit_type;
+	typedef vector<T,4>                     data_type;
+	typedef std::array<T,4>                 array_type;
+
+
+public:
+
+	typedef typename base_type::value_type              value_type;
+	typedef typename base_type::pointer                 pointer;
+	typedef typename base_type::const_pointer           const_pointer;
+	typedef typename base_type::reference               reference;
+	typedef typename base_type::const_reference         const_reference;
+	typedef typename base_type::iterator                iterator;
+	typedef typename base_type::const_iterator          const_iterator;
+	typedef typename base_type::reverse_iterator        reverse_iterator;
+	typedef typename base_type::const_reverse_iterator  const_reverse_iterator;
+	typedef typename base_type::size_type               size_type;
+	typedef typename base_type::difference_type         difference_type;
+
+
+// Variables
+public:
+
+	union { value_type  x, r, s; };
+	union { value_type  y, g, t; };
+	union { value_type  z, b, p; };
+	union { value_type  w, a, q; };
+
+
+// Constructors
+public:
+
+	vector( const data_type& vec ) { *this = vec; }
+	vector( data_type&& vec ) { *this = std::move(vec); }
+
+	vector( const vector<T,2>& first_vec, const vector<T,2>& second_vec )
+		: x(first_vec.x), y(first_vec.y), z(second_vec.x), w(second_vec.y) { }
+	vector( const vector<T,2>& vec, value_type third, value_type fourth )
+		: x(vec.x), y(vec.y), z(third), w(fourth) { }
+	vector( value_type first, const vector<T,2>& vec, value_type fourth )
+		: x(first), y(vec.x), z(vec.y), w(fourth) { }
+	vector( value_type first, value_type second, const vector<T,2>& vec )
+		: x(first), y(second), z(vec.x), w(vec.y) { }
+	vector( const vector<T,3>& vec, value_type& fourth )
+		: x(vec.x), y(vec.y), z(vec.z), w(fourth ) { }
+	vector( value_type first, const vector<T,3>& vec )
+		: x(first), y(vec.x), z(vec.y), w(vec.z) { }
+	
+	vector( const array_type& data )
+		: x(data[0]), y(data[1]), z(data[2]), w(data[3]) { }
+	vector( array_type&& data ) {
+		std::swap(x,data[0]), std::swap(y,data[1]); std::swap(z,data[2]); std::swap(w,data[3]);
+	}
+
+	vector( value_type first = value_type( ), value_type second = value_type( ),
+	        value_type third = value_type( ), value_type fourth = value_type( ) )
+		: x(first), y(second), z(third), w(fourth) { }
+
+	// expression constructor ...
+
+
+// Methods
+public:
+
+	data_type  normalize( ) const {
+		data_type vec = *this;
+		value_type len = length( );
+		vec.x /= len;
+		vec.y /= len;
+		vec.z /= len;
+		vec.w /= len;
+		return vec;
+	}
+	void       normalize_ip( ) {
+		value_type len = length( );
+		x /= len;
+		y /= len;
+		z /= len;
+		w /= len;
+	}
+
+	value_type  inner_product( ) const { return length_sq( ); }
+	value_type  scalar_product( ) const { return inner_product( ); }
+	value_type  dot( ) const { return inner_product( ); }
+
+	
+	value_type  length( ) const { return std::sqrt( length_sq( ) ); }
+	value_type  length_sq( ) const {
+		return x * x + y * y + z * z + w * w;
+	}
+
+	pointer        data( ) { return &x; }
+	const_pointer  data( ) const { return &x; }
+
+	void  fill( const_reference value ) { x = value; y = value; z = value; w = value; }
+	void  swap( data_type& vec ) {
+		std::swap( x, vec.x );
+		std::swap( y, vec.y );
+		std::swap( z, vec.z );
+		std::swap( w, vec.w );
+	}
+
+	// iterators...
+	iterator                begin( ) { return iterator( &x ); }
+	const_iterator          begin( ) const { return const_iterator( &x ); }
+	iterator                end( ) { return iterator( &(&x)[4] ); }
+	const_iterator          end( ) const { return const_iterator( &(&x)[4] ); }
+
+	reverse_iterator        rbegin( ) { return reverse_iterator(end( )); }
+	const_reverse_iterator  rbegin( ) const { return const_reverse_iterator(end( )); }
+	reverse_iterator        rend( ) { return reverse_iterator(begin( )); }
+	const_reverse_iterator  rend( ) const { return const_reverse_iterator(begin( )); }
+
+	const_iterator          cbegin( ) const { return const_iterator( &x ); }
+	const_iterator          cend( ) const { return const_iterator( &(&x)[4] ); }
+	const_reverse_iterator  crbegin( ) const { return const_reverse_iterator(end( )); }
+	const_reverse_iterator  crend( ) const { return const_reverse_iterator(begin( )); }
+
+
+// Operators
+public:
+
+	reference        operator [] ( size_type i ) { return (&x)[i]; }
+	const_reference  operator [] ( size_type i ) const { return (&x)[i]; }
+
+	data_type&  operator = ( const data_type& vec ) {
+		x = vec.x;
+		y = vec.y;
+		z = vec.z;
+		w = vec.w;
+		return *this;
+	}
+	data_type&  operator = ( data_type&& vec ) {
+		swap( *this, vec );
+		return *this;
+	}
+	// expression assignment
+
+
+}; // End class vector<T,4>
 
 
 /*
