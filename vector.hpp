@@ -19,6 +19,351 @@
 #ifndef EUBLIB_VECTOR_HPP
 #define EUBLIB_VECTOR_HPP
 
+#include <array>
+#include <iterator>
+
+#include "type_traits.hpp"
+#include "euclib_math.hpp"
+
+
+namespace euclib {
+
+namespace detail {
+
+template<typename T, std::size_t D>
+class vector_base {
+// Typedefs
+protected:
+
+	typedef std::numeric_limits<T>  limit_type;
+	typedef vector_base<T,D>        data_type;
+
+	// This class can only be used with floating point types
+	static_assert( std::is_floating_point<T>::value, "T must be floating point" );
+	static_assert( D != 0, "Cannot have 0-dimensional object" );
+	static_assert( limit_type::is_specialized, "T must specialize std::numeric_limits" );
+
+
+public:
+
+	typedef T                                      value_type;
+	typedef T*                                     pointer;
+	typedef const T*                               const_pointer;
+	typedef T&                                     reference;
+	typedef const T&                               const_reference;
+	typedef pointer                                iterator;
+	typedef const_pointer                          const_iterator;
+	typedef std::reverse_iterator<iterator>        reverse_iterator;
+	typedef std::reverse_iterator<const_iterator>  const_reverse_iterator;
+	typedef std::size_t                            size_type;
+	typedef std::ptrdiff_t                         difference_type;
+
+
+// Methods
+public:
+
+	constexpr size_type  dimension( ) const { return D; }
+	constexpr size_type  size( ) const { return D; }
+	constexpr size_type  max_size( ) const { return D; }
+	constexpr bool  empty( ) const { return false; } // Can never be size 0
+
+};
+
+} // End namespace detail
+
+
+//
+// Generic vector<T,D> for D > 4
+//
+template<typename T, const std::size_t D>
+class vector : public detail::vector_base<T,D> {
+// Typedefs
+private:
+
+	typedef detail::vector_base<T,D>        base_type;
+//	typedef typename base_type::limit_type  limit_type;
+	typedef vector<T,D>                     data_type;
+	typedef std::array<T,D>                 array_type;
+	using base_type::limit_type;
+
+
+public:
+
+	typedef typename base_type::value_type              value_type;
+	typedef typename base_type::pointer                 pointer;
+	typedef typename base_type::const_pointer           const_pointer;
+	typedef typename base_type::reference               reference;
+	typedef typename base_type::const_reference         const_reference;
+	typedef typename base_type::iterator                iterator;
+	typedef typename base_type::const_iterator          const_iterator;
+	typedef typename base_type::reverse_iterator        reverse_iterator;
+	typedef typename base_type::const_reverse_iterator  const_reverse_iterator;
+	typedef typename base_type::size_type               size_type;
+	typedef typename base_type::difference_type         difference_type;
+
+
+// Variables
+private:
+
+	array_type  m_data;
+
+
+// Constructors
+public:
+
+	vector( ) { }
+	vector( const data_type& vec ) { *this = vec; }
+	vector( data_type&& vec ) { *this = std::move(vec); }
+	
+	vector( const array_type& data ) {
+		std::copy( data.begin( ), data.end( ), begin( ) );
+	}
+	vector( array_type&& data ) { m_data.swap( data ); }
+
+	template<typename... Args>
+	vector( value_type value, Args... values ) {
+		static_assert( sizeof...(values) < D,
+		               "too many arguments to constructor" );
+		fill_values( 0, value, values... );
+
+	}
+
+	// expression constructor ...
+
+
+// Methods
+private:
+
+	template<typename... Args>
+	void fill_values( size_type i, value_type value, Args... values ) {
+		m_data[i] = value;
+		fill_values( i + 1, values... );
+	}
+
+	void fill_values( size_type i ) {
+		std::fill( typename array_type::iterator( &m_data[i] ), m_data.end( ), value_type( ) );
+	}
+
+
+public:
+
+	data_type  normalize( ) const { // TODO: move definition out of class?
+		data_type vec = *this;
+		value_type len = length( );
+		std::for_each( vec.begin( ), vec.end( ),
+			[&]( value_type& v ) {
+				v /= len;
+		});
+		return vec;
+	}
+	void       normalize_ip( ) { // TODO: move definition out of class?
+		value_type len = length( );
+		std::for_each( begin( ), end( ),
+			[&]( value_type& v ) {
+				v /= len;
+		});
+	}
+
+	value_type  inner_product( ) const { return length_sq( ); }
+	value_type  scalar_product( ) const { return inner_product( ); }
+	value_type  dot( ) const { return inner_product( ); }
+
+	
+	value_type  length( ) const { return std::sqrt( length_sq( ) ); }
+	value_type  length_sq( ) const { // TODO: possible overflow...
+		value_type len = value_type( );
+		std::for_each( begin( ), end( ),
+			[&]( value_type v ) {
+				len += v * v;
+		});
+		return len;
+	}
+
+	pointer        data( ) { return m_data.data( ); }
+	const_pointer  data( ) const { return m_data.data( ); }
+
+	void  fill( const_reference value ) { std::fill( begin( ), end( ), value ); }
+	void  swap( data_type& vec ) { m_data.swap( vec.m_data ); }
+
+	// iterators...
+	iterator                begin( ) { return m_data.begin( ); }
+	const_iterator          begin( ) const { return m_data.begin( ); }
+	iterator                end( ) { return m_data.end( ); }
+	const_iterator          end( ) const { return m_data.end( ); }
+
+	reverse_iterator        rbegin( ) { return m_data.rbegin( ); }
+	const_reverse_iterator  rbegin( ) const { return m_data.rbegin( ); }
+	reverse_iterator        rend( ) { return m_data.rend( ); }
+	const_reverse_iterator  rend( ) const { return m_data.rend( ); }
+
+	const_iterator          cbegin( ) const { return m_data.cbegin( ); }
+	const_iterator          cend( ) const { return m_data.cend( ); }
+	const_reverse_iterator  crbegin( ) const { return m_data.crbegin( ); }
+	const_reverse_iterator  crend( ) const { return m_data.crend( ); }
+
+
+// Operators
+public:
+
+	reference        operator [] ( size_type i ) { return m_data[i]; }
+	const_reference  operator [] ( size_type i ) const { return m_data[i]; }
+
+	data_type&  operator = ( const data_type& vec ) {
+		std::copy( vec.begin( ), vec.end( ), begin( ) );
+		return *this;
+	}
+	data_type&  operator = ( data_type&& vec ) {
+		m_data.swap( vec.m_data );
+		return *this;
+	}
+	// expression assignment
+
+
+};
+
+template<typename T, std::size_t D>
+bool operator == ( const vector<T,D>& lhs, const vector<T,D>& rhs ) {
+	auto itr = std::mismatch( lhs.begin( ), lhs.end( ), rhs.begin( ), detail::equal<T> );
+	return itr.first == lhs.end( ) && itr.second == rhs.end( );
+}
+
+template<typename T, std::size_t L, std::size_t R> // different size vectors always not equal
+constexpr bool operator == ( const vector<T,L>& lhs, const vector<T,R>& rhs ) { return false; }
+
+template<typename T, std::size_t D>
+bool operator != ( const vector<T,D>& lhs, const vector<T,D>& rhs ) { return !(lhs == rhs); }
+
+
+//
+// vector<T,2>, with (x,y)(r,g)(s,t) accessors
+//
+template<typename T>
+class vector<T,2> : public detail::vector_base<T,2> {
+// Typedefs
+private:
+
+	typedef detail::vector_base<T,2>        base_type;
+	typedef typename base_type::limit_type  limit_type;
+	typedef vector<T,2>                     data_type;
+	typedef std::array<T,2>                 array_type;
+
+
+public:
+
+	typedef typename base_type::value_type              value_type;
+	typedef typename base_type::pointer                 pointer;
+	typedef typename base_type::const_pointer           const_pointer;
+	typedef typename base_type::reference               reference;
+	typedef typename base_type::const_reference         const_reference;
+	typedef typename base_type::iterator                iterator;
+	typedef typename base_type::const_iterator          const_iterator;
+	typedef typename base_type::reverse_iterator        reverse_iterator;
+	typedef typename base_type::const_reverse_iterator  const_reverse_iterator;
+	typedef typename base_type::size_type               size_type;
+	typedef typename base_type::difference_type         difference_type;
+
+
+// Variables
+public:
+
+	union { value_type  x, r, s; };
+	union { value_type  y, g, t; };
+
+
+// Constructors
+public:
+
+	vector( const data_type& vec ) { *this = vec; }
+	vector( data_type&& vec ) { *this = std::move(vec); }
+	
+	vector( const array_type& data )
+		: x(data[0]), y(data[1]) { }
+	vector( array_type&& data ) {
+		std::swap(x,data.x), std::swap(y,data.y);
+	}
+
+	vector( value_type first = value_type( ), value_type second = value_type( ) )
+		: x(first), y(second) { }
+
+	// expression constructor ...
+
+
+// Methods
+public:
+
+	data_type  normalize( ) const {
+		data_type vec = *this;
+		value_type len = length( );
+		vec.x /= len;
+		vec.y /= len;
+		return vec;
+	}
+	void       normalize_ip( ) {
+		value_type len = length( );
+		x /= len;
+		y /= len;
+	}
+
+	value_type  inner_product( ) const { return length_sq( ); }
+	value_type  scalar_product( ) const { return inner_product( ); }
+	value_type  dot( ) const { return inner_product( ); }
+
+	
+	value_type  length( ) const { return std::sqrt( length_sq( ) ); }
+	value_type  length_sq( ) const {
+		return x * x + y * y;
+	}
+
+	pointer        data( ) { return &x; }
+	const_pointer  data( ) const { return &x; }
+
+	void  fill( const_reference value ) { x = value; y = value; }
+	void  swap( data_type& vec ) {
+		std::swap( x, vec.x );
+		std::swap( y, vec.y );
+	}
+
+	// iterators...
+	iterator                begin( ) { return iterator( &x ); }
+	const_iterator          begin( ) const { return const_iterator( &x ); }
+	iterator                end( ) { return iterator( &(&x)[2] ); }
+	const_iterator          end( ) const { return const_iterator( &(&x)[2] ); }
+
+	reverse_iterator        rbegin( ) { return reverse_iterator(end( )); }
+	const_reverse_iterator  rbegin( ) const { return const_reverse_iterator(end( )); }
+	reverse_iterator        rend( ) { return reverse_iterator(begin( )); }
+	const_reverse_iterator  rend( ) const { return const_reverse_iterator(begin( )); }
+
+	const_iterator          cbegin( ) const { return const_iterator( &x ); }
+	const_iterator          cend( ) const { return const_iterator( &(&x)[2] ); }
+	const_reverse_iterator  crbegin( ) const { return const_reverse_iterator(end( )); }
+	const_reverse_iterator  crend( ) const { return const_reverse_iterator(begin( )); }
+
+
+// Operators
+public:
+
+	reference        operator [] ( size_type i ) { return (&x)[i]; }
+	const_reference  operator [] ( size_type i ) const { return (&x)[i]; }
+
+	data_type&  operator = ( const data_type& vec ) {
+		x = vec.x;
+		y = vec.y;
+		return *this;
+	}
+	data_type&  operator = ( data_type&& vec ) {
+		swap( *this, vec );
+		return *this;
+	}
+	// expression assignment
+
+
+};
+
+
+
+
+/*
 #include "euclib_math.hpp"
 #include "point.hpp"
 
@@ -393,7 +738,7 @@ typedef vector<decimal128,2>  vector2d128;
 typedef vector<decimal128,3>  vector3d128;
 typedef vector<decimal128,4>  vector4d128;
 #endif
-
+*/
 }  // End namespace euclib
 
 #endif // EUCLIB_VECTOR_HPP

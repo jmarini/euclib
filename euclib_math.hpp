@@ -81,6 +81,8 @@ namespace euclib {
 // Helper functions for comparisons, because no assumptions
 //   can be made about the exactness of type T
 
+namespace detail {
+
 template<typename T>
 inline bool equal( T lhs, T rhs );
 
@@ -211,6 +213,8 @@ void round_nearest( float& value ) {
 		}
 	}
 }
+
+} // End namespace detail
 
 } // End namespace euclib
 
