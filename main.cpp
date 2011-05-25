@@ -28,12 +28,10 @@
 #include <algorithm>
 #include <functional>
 #include <ctime>
+#include <memory>
 #include <typeinfo>
 
-#include "point.hpp"
 #include "vector.hpp"
-#include "line.hpp"
-#include "segment.hpp"
 
 using namespace euclib;
 using namespace std;
@@ -53,91 +51,60 @@ int main( int argc, char *argv[] ) {
 	uniform_real_distribution<float> unif_distr(0.f, max);
 	normal_distribution<float> norm_distr( max/2.f, max/10.f );
 	mt19937 engine( seed );
-	auto unif = bind(unif_distr, engine);
-	auto norm = bind(norm_distr, engine);
+	//auto unif = bind(unif_distr, engine);
+	//auto norm = bind(norm_distr, engine);
 
 	cout << "seed=" << seed << "\n";
 
 	//////////////////////////////////////////
 	//  Testing
 
-	// Points
-	point2f pt1;				// default
-	point2f pt2 { 1.f, 3.f };	// list, same length
-	point2f pt3 { pt2 };		// copy
-	point2f pt4 { 2.f };		// list, too short
-	pt1 = 3.f * ( pt3 + pt4 );	// expression
-	cout << "=== points ===\n"
-	     << "pt1: " << pt1[0] << ", " << pt1[1] << "\n"
-	     << "pt2: " << pt2[0] << ", " << pt2[1] << "\n"
-	     << "pt3: " << pt3[0] << ", " << pt3[1] << "\n"
-	     << "pt4: " << pt4[0] << ", " << pt4[1] << "\n";
+	// vector<T,N>
+	typedef euclib::vector<float,6> vec6f;
+	#define PRINT(v) std::for_each(v.begin(),v.end(),[](float f){std::cout<<f<<" ";});std::cout<<"\n";
 
-	// Vectors
-	vector2f v1;				// default
-	vector2f v2 { 5.f, 6.f };	// list, same length
-	vector2f v2n = v2;
-	v2n.normalize_in_place( );
-	const float *v2p = v2.c_ptr( );
-	vector2f v3 { v2 };			// copy
-	vector2f v4 { 1.f };		// list, too short
-	v1 = 2.f * ( v3 + v4 );		// expression
-	cout << "=== vector ===\n"
-	     << "v1:  " << v1[0] << ", " << v1[1] << "\n"
-	     << "v2:  " << v2[0] << ", " << v2[1] << "\n"
-		 << "v2n: " << v2n[0] << ", " << v2n[1] << "\n"
-		 << "v2p: " << v2p[0] << ", " << v2p[1] << "\n"
-	     << "v3:  " << v3[0] << ", " << v3[1] << "\n"
-	     << "v4:  " << v4[0] << ", " << v4[1] << "\n";
+	// Constructors
+	vec6f v6_1;
+	vec6f v6_2( 1,2,3,4,5,6 );
+	vec6f v6_3{ 1,2,3,4,5 }; assert( v6_3[5] == 0 );
+	vec6f v6_4( v6_2 ); assert( v6_4 == v6_2 );
+	vec6f v6_5( 7,8,9,10,11,12 );
+	v6_5 = vec6f( std::move(v6_4) ); assert( v6_5 == v6_2 );
+	std::array<float,6> arr1 = {{ 6,5,4,3,2,1 }};
+	vec6f v6_6( arr1 ); assert( std::mismatch( arr1.begin( ), arr1.end( ), v6_6.begin( ) ) == std::make_pair( arr1.end( ), v6_6.end( ) ) );
+	std::array<float,6> arr2 = {{ 1,3,5,7,9,11 }};
+	vec6f v6_7( std::move(arr2) );
+//	vec6f v6_8( 1,2,3,4,5,6,7,8 ); // compile error (as it should be)
 
-	vector2f v5 { pt1 };					// vector from point
-	vector2f v6 { ( pt3 + pt4 ) * 3.f };	// vector from point expression
-	point2f pt5 { v1 };						// point from vector
-	point2f pt6 { ( v3 + v4 ) * 2.f };		// point from vector expression
-	cout << "=== mixed ===\n"
-	     << "v5:  " << v5[0]  << ", " << v5[1]  << "\n"
-	     << "v6:  " << v6[0]  << ", " << v6[1]  << "\n"
-	     << "pt5: " << pt5[0] << ", " << pt5[1] << "\n"
-	     << "pt6: " << pt6[0] << ", " << pt6[1] << "\n";
+	// Vector Methods
+	assert( v6_6.length_sq( ) == 91.f );
+	assert( v6_6.length( ) == std::sqrt( 91.f ) );
+	assert( v6_6.normalize( ) == vec6f( 6.f/sqrt(91.f), 5.f/sqrt(91.f), 4.f/sqrt(91.f), 3.f/sqrt(91.f),2.f/sqrt(91.f),1.f/sqrt(91.f) ) ); 
+	v6_6.normalize_ip( );
+	assert( v6_6 == vec6f( 6.f/sqrt(91.f), 5.f/sqrt(91.f), 4.f/sqrt(91.f), 3.f/sqrt(91.f),2.f/sqrt(91.f),1.f/sqrt(91.f) ) );
+	
+	// Iterator Methods
+	std::sort( v6_6.begin( ), v6_6.end( ) );
+	assert( v6_6 == vec6f( 1.f/sqrt(91.f), 2.f/sqrt(91.f), 3.f/sqrt(91.f), 4.f/sqrt(91.f), 5.f/sqrt(91.f), 6.f/sqrt(91.f) ) );
+	std::sort( v6_6.rbegin( ), v6_6.rend( ) );
+	assert( v6_6 == vec6f( 6.f/sqrt(91.f), 5.f/sqrt(91.f), 4.f/sqrt(91.f), 3.f/sqrt(91.f), 2.f/sqrt(91.f), 1.f/sqrt(91.f) ) );
 
-	// Lines
-	line2f l1;				// default
-	line2f l2 { pt2, pt1 };	// point, point
-	line2f l3 { pt2, v2 };	// point, vector
-	line2f l4 { l2 };		// copy
-	cout << "=== line ===\n"
-	     << "l1:  " << l1.base_point( )[0] << ", " << l1.base_point( )[1]
-	     << "    " << l1.base_vector( )[0] << ", " << l1.base_vector( )[1] << "\n"
-	     << "l2:  " << l2.base_point( )[0] << ", " << l2.base_point( )[1]
-	     << "    " << l2.base_vector( )[0] << ", " << l2.base_vector( )[1] << "\n"
-	     << "l3:  " << l3.base_point( )[0] << ", " << l3.base_point( )[1]
-	     << "    " << l3.base_vector( )[0] << ", " << l3.base_vector( )[1] << "\n"
-	     << "l4:  " << l4.base_point( )[0] << ", " << l4.base_point( )[1]
-	     << "    " << l4.base_vector( )[0] << ", " << l4.base_vector( )[1] << "\n";
+	// Misc Methods
+	v6_1.fill( 34.f );
+	vec6f( 2,4,6,8,10,12 ).swap( v6_4 );
+	for( std::size_t i = 0; i < v6_7.size( ); ++i ) {
+		v6_7[i] = i;
+	}
+	assert( v6_7 == vec6f( 0,1,2,3,4,5 ) );
 
-	// Segments
-	segment2f s1;				// default
-	segment2f s2 { pt2, pt1 };	// point, point
-	segment2f s3 { pt2, v2 };	// point, vector
-	segment2f s4 { s2 };		// copy
-	cout << "=== segment ===\n"
-	     << "s1:  " << s1.base_point( )[0] << ", " << s1.base_point( )[1]
-	     << "    " << s1.base_vector( )[0] << ", " << s1.base_vector( )[1] << "\n"
-	     << "s2:  " << s2.base_point( )[0] << ", " << s2.base_point( )[1]
-	     << "    " << s2.base_vector( )[0] << ", " << s2.base_vector( )[1] << "\n"
-	     << "s3:  " << s3.base_point( )[0] << ", " << s3.base_point( )[1]
-	     << "    " << s3.base_vector( )[0] << ", " << s3.base_vector( )[1] << "\n"
-	     << "s4:  " << s4.base_point( )[0] << ", " << s4.base_point( )[1]
-	     << "    " << s4.base_vector( )[0] << ", " << s4.base_vector( )[1] << "\n";
 
-	// Line/Segment interchange
-	line2f l5 { s2 };		// line from segment
-	segment2f s5 { l2 };	// segment from line
-	cout << "=== mixed ===\n"
-	     << "l5:  " << l5.base_point( )[0] << ", " << l5.base_point( )[1]
-	     << "    " << l5.base_vector( )[0] << ", " << l5.base_vector( )[1] << "\n"
-	     << "s5:  " << s5.base_point( )[0] << ", " << s5.base_point( )[1]
-	     << "    " << s5.base_vector( )[0] << ", " << s5.base_vector( )[1] << "\n";
+	PRINT(v6_1);
+	PRINT(v6_2);
+	PRINT(v6_3);
+	PRINT(v6_4);
+	PRINT(v6_5);
+	PRINT(v6_6);
+	PRINT(v6_7);	
 
 
 	return 0;
