@@ -166,9 +166,13 @@ public:
 		});
 	}
 
-	value_type  inner_product( ) const { return length_sq( ); }
-	value_type  scalar_product( ) const { return inner_product( ); }
-	value_type  dot( ) const { return inner_product( ); }
+	value_type  dot( const data_type& vec ) const {
+		value_type num = value_type( );
+		for( size_type i = 0; i < D; ++i ) {
+			num += m_data[i] * vec[i];
+		}
+		return num;
+	}
 
 	
 	value_type  length( ) const { return std::sqrt( length_sq( ) ); }
@@ -229,11 +233,16 @@ bool operator == ( const vector<T,D>& lhs, const vector<T,D>& rhs ) {
 	return itr.first == lhs.end( ) && itr.second == rhs.end( );
 }
 
-template<typename T, std::size_t L, std::size_t R> // different size vectors always not equal
+template<typename T, std::size_t L, std::size_t R> inline // different size vectors always not equal
 constexpr bool operator == ( const vector<T,L>& lhs, const vector<T,R>& rhs ) { return false; }
 
-template<typename T, std::size_t D>
+template<typename T, std::size_t D> inline
 bool operator != ( const vector<T,D>& lhs, const vector<T,D>& rhs ) { return !(lhs == rhs); }
+
+template<typename T, std::size_t D> inline
+T  dot( const vector<T,D>& lhs, const vector<T,D>& rhs ) { return lhs.dot( rhs ); }
+
+
 
 
 //
@@ -306,14 +315,17 @@ public:
 		y /= len;
 	}
 
-	value_type  inner_product( ) const { return length_sq( ); }
-	value_type  scalar_product( ) const { return inner_product( ); }
-	value_type  dot( ) const { return inner_product( ); }
+	value_type  dot( const data_type& vec ) const {
+		return x*vec.x + y*vec.y;
+	}
+	value_type  cross( const data_type& vec ) const {
+		return x*vec.y - y*vec.x;
+	}
 
 	
 	value_type  length( ) const { return std::sqrt( length_sq( ) ); }
 	value_type  length_sq( ) const {
-		return x * x + y * y;
+		return x*x + y*y;
 	}
 
 	pointer        data( ) { return &x; }
@@ -361,6 +373,9 @@ public:
 
 
 }; // End class vector<T,2>
+
+template<typename T> inline
+T  cross( const vector<T,2>& lhs, const vector<T,2>& rhs ) { return lhs.cross( rhs ); }
 
 
 
@@ -444,9 +459,22 @@ public:
 		z /= len;
 	}
 
-	value_type  inner_product( ) const { return length_sq( ); }
-	value_type  scalar_product( ) const { return inner_product( ); }
-	value_type  dot( ) const { return inner_product( ); }
+	value_type  dot( const data_type& vec ) const {
+		return x*vec.x + y*vec.y + z*vec.z;
+	}
+	data_type   cross( const data_type& vec ) const {
+		data_type tmp;
+		tmp.x = y*vec.z - z*vec.y;
+		tmp.y = z*vec.x - x*vec.z;
+		tmp.z = x*vec.y - y*vec.x;
+		return tmp;
+	}
+	data_type   vector_triple( const data_type& second, const data_type& third ) const {
+		return this->cross( second.cross( third ) );
+	}
+	value_type  scalar_triple( const data_type& second, const data_type& third ) const {
+		return this->dot( second.cross( third ) );
+	}
 
 	
 	value_type  length( ) const { return std::sqrt( length_sq( ) ); }
@@ -501,6 +529,21 @@ public:
 
 
 }; // End class vector<T,3>
+
+template<typename T> inline
+vector<T,3>  cross( const vector<T,3>& lhs, const vector<T,3>& rhs ) { return lhs.cross( rhs ); }
+
+template<typename T> inline
+vector<T,3>  vector_triple( const vector<T,3>& first, const vector<T,3>& second,
+                            const vector<T,3>& third ) {
+	return first.vector_triple( second, third );
+}
+
+template<typename T> inline
+T  scalar_triple( const vector<T,3>& first, const vector<T,3>& second,
+                            const vector<T,3>& third ) {
+	return first.scalar_triple( second, third );
+}
 
 
 
