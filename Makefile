@@ -1,5 +1,5 @@
 CMPL = g++
-FLGS = -Wall -Wextra -pedantic -std=c++0x
+FLGS = -Wall -Wextra -pedantic -std=c++0x -DVARIADIC_TEMPLATES
 DFLG = -g
 RFLG = -O3
 PROG = test

@@ -22,6 +22,11 @@
 #include <array>
 #include <iterator>
 
+#ifndef VARIADIC_TEMPLATES
+	#include <algorithm>
+	#include <initializer_list>
+#endif
+
 #include "type_traits.hpp"
 #include "euclib_math.hpp"
 
@@ -122,6 +127,7 @@ public:
 	}
 	vector( array_type&& data ) { m_data.swap( data ); }
 
+#ifdef VARIADIC_TEMPLATES
 	template<typename... Args>
 	vector( value_type value, Args... values ) {
 		static_assert( sizeof...(values) < D,
@@ -129,6 +135,14 @@ public:
 		fill_values( 0, value, values... );
 
 	}
+#else
+	// use initializer list with runtime assert
+	vector( std::initializer_list<value_type> values ) {
+		assert( values.size( ) <= D && "too many arguments to constructor" );
+		std::fill( std::copy( values.begin( ), values.end( ), m_data.begin( ) ),
+		           m_data.end( ), value_type( ) );
+	}
+#endif
 
 	// expression constructor ...
 
@@ -136,6 +150,7 @@ public:
 // Methods
 private:
 
+#ifdef VARIADIC_TEMPLATES
 	template<typename... Args>
 	void fill_values( size_type i, value_type value, Args... values ) {
 		m_data[i] = value;
@@ -145,6 +160,7 @@ private:
 	void fill_values( size_type i ) {
 		std::fill( typename array_type::iterator( &m_data[i] ), m_data.end( ), value_type( ) );
 	}
+#endif
 
 
 public:
