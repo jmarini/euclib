@@ -22,9 +22,12 @@
 #include <array>
 #include <iterator>
 
-#ifndef VARIADIC_TEMPLATES
+#ifndef __GNUC__
 	#include <algorithm>
 	#include <initializer_list>
+#else // workaround for http://gcc.gnu.org/bugzilla/show_bug.cgi?id=49251
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
 #include "type_traits.hpp"
@@ -63,14 +66,13 @@ public:
 	typedef std::size_t                            size_type;
 	typedef std::ptrdiff_t                         difference_type;
 
-
 // Methods
 public:
 
-	constexpr size_type  dimension( ) const { return D; }
-	constexpr size_type  size( ) const { return D; }
-	constexpr size_type  max_size( ) const { return D; }
-	constexpr bool  empty( ) const { return false; } // Can never be size 0
+	constexpr size_type  dimension( ) const noexcept { return D; }
+	constexpr size_type  size( ) const noexcept { return D; }
+	constexpr size_type  max_size( ) const noexcept { return D; }
+	constexpr bool       empty( ) const noexcept { return false; } // Can never be size 0
 
 };
 
@@ -88,10 +90,9 @@ class vector : public detail::vector_base<T,D> {
 private:
 
 	typedef detail::vector_base<T,D>        base_type;
-//	typedef typename base_type::limit_type  limit_type;
+	typedef typename base_type::limit_type  limit_type;
 	typedef vector<T,D>                     data_type;
 	typedef std::array<T,D>                 array_type;
-	using base_type::limit_type;
 
 
 public:
@@ -127,7 +128,7 @@ public:
 	}
 	vector( array_type&& data ) { m_data.swap( data ); }
 
-#ifdef VARIADIC_TEMPLATES
+#ifdef __GNUC__
 	template<typename... Args>
 	vector( value_type value, Args... values ) {
 		static_assert( sizeof...(values) < D,
@@ -150,7 +151,7 @@ public:
 // Methods
 private:
 
-#ifdef VARIADIC_TEMPLATES
+#ifdef __GNUC__
 	template<typename... Args>
 	void fill_values( size_type i, value_type value, Args... values ) {
 		m_data[i] = value;
@@ -168,7 +169,7 @@ public:
 	data_type  normalize( ) const { // TODO: move definition out of class?
 		data_type vec = *this;
 		value_type len = length( );
-		std::for_each( vec.begin( ), vec.end( ),
+		std::for_each( vec.m_data.begin( ), vec.m_data.end( ),
 			[&]( value_type& v ) {
 				v /= len;
 		});
@@ -715,89 +716,6 @@ public:
 }; // End class vector<T,4>
 
 
-/*
-template<typename T, unsigned int D>
-T dot( const vector<T,D>& v1, const vector<T,D>& v2 ) { return v1.dot( v2 ); }
-
-
-vector2 {
-
-	T dot( const vector<T,2>& v ) const {
-		return base_t::m_data[0] * v.m_data[0] + base_t::m_data[1] * v.m_data[1];
-	}
-
-	T cross( const vector<T,2>& v ) const {
-		return base_t::m_data[0] * v.m_data[1] - base_t::m_data[1] * v.m_data[0];
-	}
-
-} // end vector2
-
-
-template<typename T>
-vector<T,2> cross( const vector<T,2>& v1, const vector<T,2>& v2 ) { return v1.cross( v2 ); }
-
-template<typename T>
-T dot( const vector<T,2>& v1, const vector<T,2>& v2 ) { return v1.dot( v2 ); }
-
-
-vector3 {
-	T dot( const vector<T,3>& v ) const {
-		return base_t::m_data[0] * v.m_data[0] +
-		       base_t::m_data[1] * v.m_data[1] +
-		       base_t::m_data[2] * v.m_data[2];
-	}
-
-	vector<T,3> cross( const vector<T,3>& v ) const {
-		vector<T,3> result;
-		result.m_data[0] = base_t::m_data[1] * v.m_data[2] -
-		                   base_t::m_data[2] * v.m_data[1];
-		result.m_data[1] = base_t::m_data[0] * v.m_data[2] -
-		                   base_t::m_data[2] * v.m_data[0];
-		result.m_data[2] = base_t::m_data[0] * v.m_data[1] -
-		                   base_t::m_data[1] * v.m_data[0];
-		return result;
-	}
-
-	// this x ( v1 x v2 )
-	vector<T,3> vector_triple( const vector<T,3>& v1, const vector<T,3>& v2 ) const {
-		return this->cross( v1.cross( v2 ) );
-	}
-
-	// this . ( v1 x v2 )
-	T vector_scalar( const vector<T,3>& v1, const vector<T,3>& v2 ) const {
-		return this->dot( v1.cross( v2 ) );
-	}
-
-} // end vector3
-
-// v1 x ( v2 x v3 )
-template<typename T>
-vector<T,3> vector_triple( const vector<T,3>& v1, const vector<T,3>& v2, const vector<T,3>& v3 ) { return v1.cross( v2.cross( v3 ) ); }
-
-// v1 . ( v2 x v3 )
-template<typename T>
-T scalar_triple( const vector<T,3>& v1, const vector<T,3>& v2, const vector<T,3>& v3 ) { return v1.dot( v2.cross( v3 ) ); }
-
-template<typename T>
-vector<T,3> cross( const vector<T,3>& v1, const vector<T,3>& v2 ) { return v1.cross( v2 ); }
-
-template<typename T>
-T dot( const vector<T,3>& v1, const vector<T,3>& v2 ) { return v1.dot( v2 ); }
-
-
-vector4 {
-	T dot( const vector<T,4>& v ) const {
-		return base_t::m_data[0] * v.m_data[0] +
-		       base_t::m_data[1] * v.m_data[1] +
-		       base_t::m_data[2] * v.m_data[2] +
-		       base_t::m_data[3] * v.m_data[3];
-	}
-} // end vector4
-
-template<typename T>
-T dot( const vector<T,4>& v1, const vector<T,4>& v2 ) { return v1.dot( v2 ); }
-*/
-
 // Various typedefs to make usage easier
 typedef vector<float,2>       vector2f;
 typedef vector<float,3>       vector3f;
@@ -816,6 +734,10 @@ typedef vector<long double,3> vector3ld;
 typedef vector<long double,4> vector4ld;
 
 }  // End namespace euclib
+
+#ifdef __GNUC__ // again, bug workaround
+#	pragma GCC diagnostic pop
+#endif
 
 #endif // EUCLIB_VECTOR_HPP
 
