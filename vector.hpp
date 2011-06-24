@@ -246,7 +246,7 @@ public:
 
 template<typename T, std::size_t D>
 bool operator == ( const vector<T,D>& lhs, const vector<T,D>& rhs ) {
-	auto itr = std::mismatch( lhs.begin( ), lhs.end( ), rhs.begin( ), detail::equal<T> );
+	auto itr = std::mismatch( lhs.begin( ), lhs.end( ), rhs.begin( ), equal<T> );
 	return itr.first == lhs.end( ) && itr.second == rhs.end( );
 }
 

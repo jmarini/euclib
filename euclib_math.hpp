@@ -81,15 +81,42 @@ namespace euclib {
 // Helper functions for comparisons, because no assumptions
 //   can be made about the exactness of type T
 
-namespace detail {
+	template<typename T>
+	inline bool equal( T lhs, T rhs );
 
-template<typename T>
-inline bool equal( T lhs, T rhs );
+	template<typename T>
+	inline bool not_equal( T lhs, T rhs ) {
+		return !equal( lhs, rhs );
+	}
+
+	template<typename T>
+	inline bool less_than( T lhs, T rhs );
+
+	template<typename T>
+	inline bool greater_than( T lhs, T rhs ) {
+		return less_than( rhs, lhs );
+	}
+
+	template<typename T>
+	inline bool less_than_eq( T lhs, T rhs ) {
+		return !less_than( rhs, lhs);
+	}
+
+	template<typename T>
+	inline bool greater_than_eq( T lhs, T rhs ) {
+		return !less_than( lhs, rhs);
+	}
+
+	template<typename T, typename U>
+	inline T round_nearest_cast( U value );
+
+
+namespace detail {
 
 	template<typename T>
 	inline bool equal( T lhs, T rhs, mpl::inaccurate_tag ) {
 		return std::abs( lhs - rhs ) <= std::numeric_limits<T>::epsilon( ) *
-		                                ( std::abs(lhs) + std::abs(rhs) + 1.0 );
+		                                ( std::abs(lhs) + std::abs(rhs) + T(1.0) );
 	}
 
 	template<typename T>
@@ -97,24 +124,12 @@ inline bool equal( T lhs, T rhs );
 		return lhs == rhs;
 	}
 
-	template<typename T>
-	inline bool equal( T lhs, T rhs ) {
-		return equal( lhs, rhs, typename mpl::accuracy_traits<T>::category_t( ) );
-	}
 
-
-template<typename T>
-inline bool not_equal( T lhs, T rhs ) {
-	return !(lhs == rhs);
-}
-
-template<typename T>
-inline bool less_than( T lhs, T rhs );
 
 	template<typename T>
 	inline bool less_than( T lhs, T rhs, mpl::inaccurate_tag ) {
 		return rhs - lhs > std::numeric_limits<T>::epsilon( ) *
-		                   ( std::abs(lhs) + std::abs(rhs) + 1.0 );
+		                   ( std::abs(lhs) + std::abs(rhs) + T(1.0) );
 	}
 
 	template<typename T>
@@ -122,42 +137,36 @@ inline bool less_than( T lhs, T rhs );
 		return lhs < rhs;
 	}
 
-	template<typename T>
-	inline bool less_than( T lhs, T rhs ) {
-		return less_than( lhs, rhs, typename mpl::accuracy_traits<T>::category_t( ) );
+	// floating to floating
+	template<typename T, typename U>
+	inline T round_nearest_cast( U value, mpl::inaccurate_tag, mpl::inaccurate_tag ) {
+		return static_cast<T>(value);
 	}
 
-
-template<typename T>
-inline bool greater_than( T lhs, T rhs ) {
-	return rhs < lhs;
-}
-
-template<typename T>
-inline bool less_than_eq( T lhs, T rhs ) {
-	return !(rhs < lhs);
-}
-
-template<typename T>
-inline bool greater_than_eq( T lhs, T rhs ) {
-	return !(lhs < rhs);
-}
-
-
-// TODO: change to two versions (floating/decimal or integer)
-template<typename T>
-void round_nearest( long double& value ) {
-	if( std::numeric_limits<T>::is_integer ) { // make sure it rounds to nearest when cast to T
+	// integer to integer
+	template<typename T, typename U>
+	inline T round_nearest_cast( U value, mpl::accurate_tag, mpl::accurate_tag ) {
+		return static_cast<T>(value);
+	}
+	// integer to floating
+	template<typename T, typename U>
+	inline T round_nearest_cast( U value, mpl::accurate_tag, mpl::inaccurate_tag ) {
+		return static_cast<T>(value);
+	}
+	
+	// floating to integer
+	template<typename T, typename U>
+	inline T round_nearest_cast( U value, mpl::inaccurate_tag, mpl::accurate_tag ) {
 		switch( std::numeric_limits<T>::round_style ) {
 			case 0:  // round to 0
-				if( less_than( value, 0.0L ) ) { value -= 0.5L; }
-				else { value += 0.5L; }
+				if( less_than( value, U(0.0) ) ) { value -= U(0.5); }
+				else { value += U(0.5); }
 				break;
 			case 2:  // round to inf
-				value -= 0.5L;
+				value -= U(0.5);
 				break;
 			case 3:  // round to -inf
-				value += 0.5L;
+				value += U(0.5);
 				break;
 			case -1: // indeterminate
 			default:
@@ -165,56 +174,27 @@ void round_nearest( long double& value ) {
 			case 1:  // round toward nearest
 				break;
 		}
+		return static_cast<T>(value);
 	}
-}
-
-template<typename T>
-void round_nearest( double& value ) {
-	if( std::numeric_limits<T>::is_integer ) { // make sure it rounds to nearest when cast to T
-		switch( std::numeric_limits<T>::round_style ) {
-			case 0:  // round to 0
-				if( less_than( value, 0.0 ) ) { value -= 0.5; }
-				else { value += 0.5; }
-				break;
-			case 2:  // round to inf
-				value -= 0.5;
-				break;
-			case 3:  // round to -inf
-				value += 0.5;
-				break;
-			case -1: // indeterminate
-			default:
-				assert(false);
-			case 1:  // round toward nearest
-				break;
-		}
-	}
-}
-
-template<typename T>
-void round_nearest( float& value ) {
-	if( std::numeric_limits<T>::is_integer ) { // make sure it rounds to nearest when cast to T
-		switch( std::numeric_limits<T>::round_style ) {
-			case 0:  // round to 0
-				if( less_than( value, 0.f ) ) { value -= 0.5f; }
-				else { value += 0.5f; }
-				break;
-			case 2:  // round to inf
-				value -= 0.5f;
-				break;
-			case 3:  // round to -inf
-				value += 0.5f;
-				break;
-			case -1: // indeterminate
-			default:
-				assert(false);
-			case 1:  // round toward nearest
-				break;
-		}
-	}
-}
 
 } // End namespace detail
+
+
+	template<typename T>
+	inline bool equal( T lhs, T rhs ) {
+		return detail::equal( lhs, rhs, typename mpl::accuracy_traits<T>::category_type( ) );
+	}
+
+	template<typename T>
+	inline bool less_than( T lhs, T rhs ) {
+		return detail::less_than( lhs, rhs, typename mpl::accuracy_traits<T>::category_type( ) );
+	}
+	
+	template<typename T, typename U>
+	inline T round_nearest_cast( U value ) {
+		return detail::round_nearest_cast<T>( value, typename mpl::accuracy_traits<U>::category_type( ),
+		                                      typename mpl::accuracy_traits<T>::category_type( ) );
+	}
 
 } // End namespace euclib
 
