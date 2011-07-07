@@ -398,7 +398,7 @@ public:
 		return *this;
 	}
 	data_type&  operator = ( data_type&& vec ) {
-		swap( *this, vec );
+		swap( vec );
 		return *this;
 	}
 
@@ -566,7 +566,7 @@ public:
 		return *this;
 	}
 	data_type&  operator = ( data_type&& vec ) {
-		swap( *this, vec );
+		swap( vec );
 		return *this;
 	}
 
@@ -748,7 +748,7 @@ public:
 		return *this;
 	}
 	data_type&  operator = ( data_type&& vec ) {
-		swap( *this, vec );
+		swap( vec );
 		return *this;
 	}
 
