@@ -25,9 +25,6 @@
 #ifndef __GNUC__
 	#include <algorithm>
 	#include <initializer_list>
-#else // workaround for http://gcc.gnu.org/bugzilla/show_bug.cgi?id=49251
-#	pragma GCC diagnostic push
-#	pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
 #include "type_traits.hpp"
@@ -383,7 +380,7 @@ public:
 		return *this;
 	}
 	data_type&  operator = ( data_type&& vec ) {
-		swap( *this, vec );
+		swap( vec );
 		return *this;
 	}
 	// expression assignment
@@ -539,7 +536,7 @@ public:
 		return *this;
 	}
 	data_type&  operator = ( data_type&& vec ) {
-		swap( *this, vec );
+		swap( vec );
 		return *this;
 	}
 	// expression assignment
@@ -707,7 +704,7 @@ public:
 		return *this;
 	}
 	data_type&  operator = ( data_type&& vec ) {
-		swap( *this, vec );
+		swap( vec );
 		return *this;
 	}
 	// expression assignment
@@ -734,10 +731,6 @@ typedef vector<long double,3> vector3ld;
 typedef vector<long double,4> vector4ld;
 
 }  // End namespace euclib
-
-#ifdef __GNUC__ // again, bug workaround
-#	pragma GCC diagnostic pop
-#endif
 
 #endif // EUCLIB_VECTOR_HPP
 
