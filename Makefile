@@ -22,3 +22,6 @@ clean:
 plot: $(PROG)
 	gnuplot $(PLOT)		
 
+check:
+	cppcheck --enable=all .
+
