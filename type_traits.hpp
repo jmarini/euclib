@@ -27,14 +27,14 @@ struct inaccurate_tag { };
 struct accurate_tag { };
 
 template<typename T>
-struct accuracy_traits { typedef accurate_tag category_t; };
+struct accuracy_traits { typedef accurate_tag category_type; };
 
 template< >
-struct accuracy_traits<float> { typedef inaccurate_tag category_t; };
+struct accuracy_traits<float> { typedef inaccurate_tag category_type; };
 template< >
-struct accuracy_traits<double> { typedef inaccurate_tag category_t; };
+struct accuracy_traits<double> { typedef inaccurate_tag category_type; };
 template< >
-struct accuracy_traits<long double> { typedef inaccurate_tag category_t; };
+struct accuracy_traits<long double> { typedef inaccurate_tag category_type; };
 
 } // End namespace mpl
 

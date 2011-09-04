@@ -164,7 +164,7 @@ private:
 
 public:
 
-	data_type  normalize( ) const { // TODO: move definition out of class?
+	data_type  normalize( ) const {
 		data_type vec = *this;
 		value_type len = length( );
 		std::for_each( vec.m_data.begin( ), vec.m_data.end( ),
@@ -173,7 +173,7 @@ public:
 		});
 		return vec;
 	}
-	void       normalize_ip( ) { // TODO: move definition out of class?
+	void       normalize_ip( ) {
 		value_type len = length( );
 		std::for_each( begin( ), end( ),
 			[&]( value_type& v ) {
@@ -237,6 +237,21 @@ public:
 		m_data.swap( vec.m_data );
 		return *this;
 	}
+	
+	data_type&  operator += ( const data_type& vec ) {
+		for( std::size_t i = 0; i < D; ++i ) {
+			m_data[i] += vec[i];
+		}
+		return *this;
+	}
+	data_type&  operator *= ( value_type scalar ) {
+		std::for_each( begin( ), end( ),
+			[&]( value_type& v ) {
+				v *= scalar;
+		});
+		return *this;
+	}
+
 	// expression assignment
 
 
@@ -247,7 +262,7 @@ public:
 
 template<typename T, std::size_t D>
 bool operator == ( const vector<T,D>& lhs, const vector<T,D>& rhs ) {
-	auto itr = std::mismatch( lhs.begin( ), lhs.end( ), rhs.begin( ), detail::equal<T> );
+	auto itr = std::mismatch( lhs.begin( ), lhs.end( ), rhs.begin( ), equal<T> );
 	return itr.first == lhs.end( ) && itr.second == rhs.end( );
 }
 
@@ -387,6 +402,19 @@ public:
 		swap( vec );
 		return *this;
 	}
+
+	data_type&  operator += ( const data_type& vec ) {
+		x += vec.x;
+		y += vec.y;
+		return *this;
+	}
+
+	data_type&  operator *= ( value_type scalar ) {
+		x *= scalar;
+		y *= scalar;
+		return *this;
+	}
+
 	// expression assignment
 
 
@@ -543,6 +571,21 @@ public:
 		swap( vec );
 		return *this;
 	}
+
+	data_type&  operator += ( const data_type& vec ) {
+		x += vec.x;
+		y += vec.y;
+		z += vec.z;
+		return *this;
+	}
+
+	data_type&  operator *= ( value_type scalar ) {
+		x *= scalar;
+		y *= scalar;
+		z *= scalar;
+		return *this;
+	}
+
 	// expression assignment
 
 
@@ -711,6 +754,23 @@ public:
 		swap( vec );
 		return *this;
 	}
+
+	data_type&  operator += ( const data_type& vec ) {
+		x += vec.x;
+		y += vec.y;
+		z += vec.z;
+		w += vec.w;
+		return *this;
+	}
+
+	data_type&  operator *= ( value_type scalar ) {
+		x *= scalar;
+		y *= scalar;
+		z *= scalar;
+		w *= scalar;
+		return *this;
+	}
+
 	// expression assignment
 
 
