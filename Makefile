@@ -1,7 +1,7 @@
 CMPL = g++
 FLGS = -Wall -Wextra -pedantic -std=c++0x
-DFLG = -g
-RFLG = -O3
+DFLG = -g -O0
+RFLG = -O3 -ffast-math
 PROG = test
 PLOT = plot.out
 LIBS = 

@@ -59,22 +59,31 @@ int main( int argc, char *argv[] ) {
 	//////////////////////////////////////////
 	//  Testing
 
+	////////////////////////
 	// vector<T,N>
 	typedef euclib::vector<float,6> vec6f;
 	#define PRINT(v) std::for_each(v.begin(),v.end(),[](float f){std::cout<<f<<" ";});std::cout<<"\n";
 
 	// Constructors
-	vec6f v6_1;
-	vec6f v6_2( 1,2,3,4,5,6 );
-	vec6f v6_3{ 1,2,3,4,5 }; assert( v6_3[5] == 0 );
-	vec6f v6_4( v6_2 ); assert( v6_4 == v6_2 );
-	vec6f v6_5( 7,8,9,10,11,12 );
-	v6_5 = vec6f( std::move(v6_4) ); assert( v6_5 == v6_2 );
+	vec6f v6_1;												// Default constructor does nothing
+	vec6f v6_2( 1,2,3,4,5,6 );								// Init list constructor
+		assert( v6_2[3] == 4 );
+	vec6f v6_3{ 1,2,3,4,5 };								// Init list constructor
+		assert( v6_3[5] == 0 );
+	vec6f v6_4( v6_2 );										// Copy constructor
+		assert( std::mismatch( v6_4.begin( ), v6_4.end( ), v6_2.begin( ) )
+				== std::make_pair( v6_4.end( ), v6_2.end( ) ) );
+		assert( v6_4 == v6_2 );								// Equality operator
+	vec6f v6_5( std::move( v6_4 ) );						// Move constructor
+		assert( v6_5 == v6_2 );
 	std::array<float,6> arr1 = {{ 6,5,4,3,2,1 }};
-	vec6f v6_6( arr1 ); assert( std::mismatch( arr1.begin( ), arr1.end( ), v6_6.begin( ) ) == std::make_pair( arr1.end( ), v6_6.end( ) ) );
+	vec6f v6_6( arr1 );										// std::array copy constructor
+		assert( std::mismatch( arr1.begin( ), arr1.end( ), v6_6.begin( ) )
+				== std::make_pair( arr1.end( ), v6_6.end( ) ) );
 	std::array<float,6> arr2 = {{ 1,3,5,7,9,11 }};
-	vec6f v6_7( std::move(arr2) );
-//	vec6f v6_8( 1,2,3,4,5,6,7,8 ); // compile error (as it should be)
+	vec6f v6_7( std::move(arr2) );							// std::array move constructor
+		assert( v6_7[3] == 7 );
+//	vec6f v6_8( 1,2,3,4,5,6,7,8 );							// error (as it should be)
 
 	// Vector Methods
 	assert( v6_6.length_sq( ) == 91.f );
