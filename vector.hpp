@@ -22,9 +22,10 @@
 #include <array>
 #include <iterator>
 
-#ifndef __GNUC__
+#ifndef __GNUC__ // to replace variadic templates
 	#include <algorithm>
 	#include <initializer_list>
+	#define noexcept
 #endif
 
 #include "type_traits.hpp"
@@ -45,7 +46,7 @@ protected:
 
 	// This class can only be used with floating point types
 	static_assert( std::is_floating_point<T>::value, "T must be floating point" );
-	static_assert( D != 0, "Cannot have 0-dimensional object" );
+	static_assert( D != 0, "Cannot have 0-dimensional vector" );
 	static_assert( limit_type::is_specialized, "T must specialize std::numeric_limits" );
 
 
@@ -190,7 +191,7 @@ public:
 
 	
 	value_type  length( ) const { return std::sqrt( length_sq( ) ); }
-	value_type  length_sq( ) const { // TODO: possible overflow...
+	value_type  length_sq( ) const { // returns inf on overflow
 		value_type len = value_type( );
 		std::for_each( begin( ), end( ),
 			[&]( value_type v ) {
@@ -199,27 +200,27 @@ public:
 		return len;
 	}
 
-	pointer        data( ) { return m_data.data( ); }
-	const_pointer  data( ) const { return m_data.data( ); }
+	pointer        data( ) noexcept { return m_data.data( ); }
+	const_pointer  data( ) const noexcept { return m_data.data( ); }
 
 	void  fill( const_reference value ) { std::fill( begin( ), end( ), value ); }
-	void  swap( data_type& vec ) { m_data.swap( vec.m_data ); }
+	void  swap( data_type& vec ) { m_data.swap( vec.m_data ); } // TODO: add conditional noexcept
 
 	// iterators...
-	iterator                begin( ) { return m_data.begin( ); }
-	const_iterator          begin( ) const { return m_data.begin( ); }
-	iterator                end( ) { return m_data.end( ); }
-	const_iterator          end( ) const { return m_data.end( ); }
+	iterator                begin( ) noexcept { return m_data.begin( ); }
+	const_iterator          begin( ) const noexcept { return m_data.begin( ); }
+	iterator                end( ) noexcept { return m_data.end( ); }
+	const_iterator          end( ) const noexcept { return m_data.end( ); }
 
-	reverse_iterator        rbegin( ) { return m_data.rbegin( ); }
-	const_reverse_iterator  rbegin( ) const { return m_data.rbegin( ); }
-	reverse_iterator        rend( ) { return m_data.rend( ); }
-	const_reverse_iterator  rend( ) const { return m_data.rend( ); }
+	reverse_iterator        rbegin( ) noexcept { return m_data.rbegin( ); }
+	const_reverse_iterator  rbegin( ) const noexcept { return m_data.rbegin( ); }
+	reverse_iterator        rend( ) noexcept { return m_data.rend( ); }
+	const_reverse_iterator  rend( ) const noexcept { return m_data.rend( ); }
 
-	const_iterator          cbegin( ) const { return m_data.cbegin( ); }
-	const_iterator          cend( ) const { return m_data.cend( ); }
-	const_reverse_iterator  crbegin( ) const { return m_data.crbegin( ); }
-	const_reverse_iterator  crend( ) const { return m_data.crend( ); }
+	const_iterator          cbegin( ) const noexcept { return m_data.cbegin( ); }
+	const_iterator          cend( ) const noexcept { return m_data.cend( ); }
+	const_reverse_iterator  crbegin( ) const noexcept { return m_data.crbegin( ); }
+	const_reverse_iterator  crend( ) const noexcept { return m_data.crend( ); }
 
 
 // Operators
@@ -240,6 +241,9 @@ public:
 
 
 };
+
+//template<typename T, std::size_t D>
+//void swap( vector<T,D>& lhs, vector<T,D>& rhs ) noexcept( lhs.swap(rhs) ) { } // TODO: fill in...
 
 template<typename T, std::size_t D>
 bool operator == ( const vector<T,D>& lhs, const vector<T,D>& rhs ) {
@@ -342,30 +346,30 @@ public:
 		return x*x + y*y;
 	}
 
-	pointer        data( ) { return &x; }
-	const_pointer  data( ) const { return &x; }
+	pointer        data( ) noexcept { return &x; }
+	const_pointer  data( ) const noexcept { return &x; }
 
 	void  fill( const_reference value ) { x = value; y = value; }
-	void  swap( data_type& vec ) {
+	void  swap( data_type& vec ) { // TODO: add conditional noexcept
 		std::swap( x, vec.x );
 		std::swap( y, vec.y );
 	}
 
 	// iterators...
-	iterator                begin( ) { return iterator( &x ); }
-	const_iterator          begin( ) const { return const_iterator( &x ); }
-	iterator                end( ) { return iterator( &(&x)[2] ); }
-	const_iterator          end( ) const { return const_iterator( &(&x)[2] ); }
+	iterator                begin( ) noexcept { return iterator( &x ); }
+	const_iterator          begin( ) const noexcept { return const_iterator( &x ); }
+	iterator                end( ) noexcept { return iterator( &(&x)[2] ); }
+	const_iterator          end( ) const noexcept { return const_iterator( &(&x)[2] ); }
 
-	reverse_iterator        rbegin( ) { return reverse_iterator(end( )); }
-	const_reverse_iterator  rbegin( ) const { return const_reverse_iterator(end( )); }
-	reverse_iterator        rend( ) { return reverse_iterator(begin( )); }
-	const_reverse_iterator  rend( ) const { return const_reverse_iterator(begin( )); }
+	reverse_iterator        rbegin( ) noexcept { return reverse_iterator(end( )); }
+	const_reverse_iterator  rbegin( ) const noexcept { return const_reverse_iterator(end( )); }
+	reverse_iterator        rend( ) noexcept { return reverse_iterator(begin( )); }
+	const_reverse_iterator  rend( ) const noexcept { return const_reverse_iterator(begin( )); }
 
-	const_iterator          cbegin( ) const { return const_iterator( &x ); }
-	const_iterator          cend( ) const { return const_iterator( &(&x)[2] ); }
-	const_reverse_iterator  crbegin( ) const { return const_reverse_iterator(end( )); }
-	const_reverse_iterator  crend( ) const { return const_reverse_iterator(begin( )); }
+	const_iterator          cbegin( ) const noexcept { return const_iterator( &x ); }
+	const_iterator          cend( ) const noexcept { return const_iterator( &(&x)[2] ); }
+	const_reverse_iterator  crbegin( ) const noexcept { return const_reverse_iterator(end( )); }
+	const_reverse_iterator  crend( ) const noexcept { return const_reverse_iterator(begin( )); }
 
 
 // Operators
@@ -496,31 +500,31 @@ public:
 		return x * x + y * y + z * z;
 	}
 
-	pointer        data( ) { return &x; }
-	const_pointer  data( ) const { return &x; }
+	pointer        data( ) noexcept { return &x; }
+	const_pointer  data( ) const noexcept { return &x; }
 
 	void  fill( const_reference value ) { x = value; y = value; z = value; }
-	void  swap( data_type& vec ) {
+	void  swap( data_type& vec ) { // TODO: add conditional noexcept
 		std::swap( x, vec.x );
 		std::swap( y, vec.y );
 		std::swap( z, vec.z );
 	}
 
 	// iterators...
-	iterator                begin( ) { return iterator( &x ); }
-	const_iterator          begin( ) const { return const_iterator( &x ); }
-	iterator                end( ) { return iterator( &(&x)[3] ); }
-	const_iterator          end( ) const { return const_iterator( &(&x)[3] ); }
+	iterator                begin( ) noexcept { return iterator( &x ); }
+	const_iterator          begin( ) const noexcept { return const_iterator( &x ); }
+	iterator                end( ) noexcept { return iterator( &(&x)[3] ); }
+	const_iterator          end( ) const noexcept { return const_iterator( &(&x)[3] ); }
 
-	reverse_iterator        rbegin( ) { return reverse_iterator(end( )); }
-	const_reverse_iterator  rbegin( ) const { return const_reverse_iterator(end( )); }
-	reverse_iterator        rend( ) { return reverse_iterator(begin( )); }
-	const_reverse_iterator  rend( ) const { return const_reverse_iterator(begin( )); }
+	reverse_iterator        rbegin( ) noexcept { return reverse_iterator(end( )); }
+	const_reverse_iterator  rbegin( ) const noexcept { return const_reverse_iterator(end( )); }
+	reverse_iterator        rend( ) noexcept { return reverse_iterator(begin( )); }
+	const_reverse_iterator  rend( ) const noexcept { return const_reverse_iterator(begin( )); }
 
-	const_iterator          cbegin( ) const { return const_iterator( &x ); }
-	const_iterator          cend( ) const { return const_iterator( &(&x)[3] ); }
-	const_reverse_iterator  crbegin( ) const { return const_reverse_iterator(end( )); }
-	const_reverse_iterator  crend( ) const { return const_reverse_iterator(begin( )); }
+	const_iterator          cbegin( ) const noexcept { return const_iterator( &x ); }
+	const_iterator          cend( ) const noexcept { return const_iterator( &(&x)[3] ); }
+	const_reverse_iterator  crbegin( ) const noexcept { return const_reverse_iterator(end( )); }
+	const_reverse_iterator  crend( ) const noexcept { return const_reverse_iterator(begin( )); }
 
 
 // Operators
@@ -662,11 +666,11 @@ public:
 		return x * x + y * y + z * z + w * w;
 	}
 
-	pointer        data( ) { return &x; }
-	const_pointer  data( ) const { return &x; }
+	pointer        data( ) noexcept { return &x; }
+	const_pointer  data( ) const noexcept { return &x; }
 
 	void  fill( const_reference value ) { x = value; y = value; z = value; w = value; }
-	void  swap( data_type& vec ) {
+	void  swap( data_type& vec ) { // TODO: add conditional noexcept
 		std::swap( x, vec.x );
 		std::swap( y, vec.y );
 		std::swap( z, vec.z );
@@ -674,20 +678,20 @@ public:
 	}
 
 	// iterators...
-	iterator                begin( ) { return iterator( &x ); }
-	const_iterator          begin( ) const { return const_iterator( &x ); }
-	iterator                end( ) { return iterator( &(&x)[4] ); }
-	const_iterator          end( ) const { return const_iterator( &(&x)[4] ); }
+	iterator                begin( ) noexcept { return iterator( &x ); }
+	const_iterator          begin( ) const noexcept { return const_iterator( &x ); }
+	iterator                end( ) noexcept { return iterator( &(&x)[4] ); }
+	const_iterator          end( ) const noexcept { return const_iterator( &(&x)[4] ); }
 
-	reverse_iterator        rbegin( ) { return reverse_iterator(end( )); }
-	const_reverse_iterator  rbegin( ) const { return const_reverse_iterator(end( )); }
-	reverse_iterator        rend( ) { return reverse_iterator(begin( )); }
-	const_reverse_iterator  rend( ) const { return const_reverse_iterator(begin( )); }
+	reverse_iterator        rbegin( ) noexcept { return reverse_iterator(end( )); }
+	const_reverse_iterator  rbegin( ) const noexcept { return const_reverse_iterator(end( )); }
+	reverse_iterator        rend( ) noexcept { return reverse_iterator(begin( )); }
+	const_reverse_iterator  rend( ) const noexcept { return const_reverse_iterator(begin( )); }
 
-	const_iterator          cbegin( ) const { return const_iterator( &x ); }
-	const_iterator          cend( ) const { return const_iterator( &(&x)[4] ); }
-	const_reverse_iterator  crbegin( ) const { return const_reverse_iterator(end( )); }
-	const_reverse_iterator  crend( ) const { return const_reverse_iterator(begin( )); }
+	const_iterator          cbegin( ) const noexcept { return const_iterator( &x ); }
+	const_iterator          cend( ) const noexcept { return const_iterator( &(&x)[4] ); }
+	const_reverse_iterator  crbegin( ) const noexcept { return const_reverse_iterator(end( )); }
+	const_reverse_iterator  crend( ) const noexcept { return const_reverse_iterator(begin( )); }
 
 
 // Operators
@@ -718,9 +722,9 @@ typedef vector<float,2>       vector2f;
 typedef vector<float,3>       vector3f;
 typedef vector<float,4>       vector4f;
 
-typedef vector<float,2>       vector2;
-typedef vector<float,3>       vector3;
-typedef vector<float,4>       vector4;
+typedef vector<float,2>       vec2;
+typedef vector<float,3>       vec3;
+typedef vector<float,4>       vec4;
 
 typedef vector<double,2>      vector2d;
 typedef vector<double,3>      vector3d;
