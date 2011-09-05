@@ -143,7 +143,7 @@ public:
 	}
 #endif
 
-	// expression constructor ...
+	// TODO: expression constructor ...
 
 
 // Methods
@@ -252,7 +252,7 @@ public:
 		return *this;
 	}
 
-	// expression assignment
+	// TODO: expression assignment
 
 
 };
@@ -317,8 +317,12 @@ public:
 // Constructors
 public:
 
-	vector( const data_type& vec ) { *this = vec; }
-	vector( data_type&& vec ) { *this = std::move(vec); }
+	vector( const data_type& vec ) :
+		x( vec.x ), y( vec.y ) { }
+	vector( data_type&& vec ) :
+		x( vec.x ), y( vec.y ) {
+		vec.x = vec.y = value_type( );
+	}
 	
 	vector( const array_type& data )
 		: x(data[0]), y(data[1]) { }
@@ -329,7 +333,7 @@ public:
 	vector( value_type first = value_type( ), value_type second = value_type( ) )
 		: x(first), y(second) { }
 
-	// expression constructor ...
+	// TODO: expression constructor ...
 
 
 // Methods
@@ -415,7 +419,7 @@ public:
 		return *this;
 	}
 
-	// expression assignment
+	// TODO: expression assignment
 
 
 }; // End class vector<T,2>
@@ -466,8 +470,12 @@ public:
 // Constructors
 public:
 
-	vector( const data_type& vec ) { *this = vec; }
-	vector( data_type&& vec ) { *this = std::move(vec); }
+	vector( const data_type& vec )
+		: x( vec.x ), y( vec.y ), z( vec.z ) { }
+	vector( data_type&& vec )
+		: x( vec.x ), y( vec.y ), z( vec.z ) {
+		vec.x = vec.y = vec.z = value_type( );
+	}
 
 	vector( const vector<T,2>& vec, value_type third )
 		: x(vec.x), y(vec.y), z(third) { }
@@ -484,7 +492,7 @@ public:
 	        value_type third = value_type( ) )
 		: x(first), y(second), z(third) { }
 
-	// expression constructor ...
+	// TODO: expression constructor ...
 
 
 // Methods
@@ -586,7 +594,7 @@ public:
 		return *this;
 	}
 
-	// expression assignment
+	// TODO: expression assignment
 
 
 }; // End class vector<T,3>
@@ -650,8 +658,12 @@ public:
 // Constructors
 public:
 
-	vector( const data_type& vec ) { *this = vec; }
-	vector( data_type&& vec ) { *this = std::move(vec); }
+	vector( const data_type& vec )
+		: x( vec.x ), y( vec.y ), z( vec.z ), w( vec.w ) { }
+	vector( data_type&& vec )
+		: x( vec.x ), y( vec.y ), z( vec.z ), w( vec.w ) {
+		vec.x = vec.y = vec.z = vec.w = value_type( );
+	}
 
 	vector( const vector<T,2>& first_vec, const vector<T,2>& second_vec )
 		: x(first_vec.x), y(first_vec.y), z(second_vec.x), w(second_vec.y) { }
@@ -676,7 +688,7 @@ public:
 	        value_type third = value_type( ), value_type fourth = value_type( ) )
 		: x(first), y(second), z(third), w(fourth) { }
 
-	// expression constructor ...
+	// TODO: expression constructor ...
 
 
 // Methods
@@ -771,7 +783,7 @@ public:
 		return *this;
 	}
 
-	// expression assignment
+	// TODO: expression assignment
 
 
 }; // End class vector<T,4>
