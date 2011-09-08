@@ -26,6 +26,7 @@
 	#include <algorithm>
 	#include <initializer_list>
 	#define noexcept
+	#define constexpr
 #endif
 
 #include "type_traits.hpp"
@@ -95,17 +96,17 @@ private:
 
 public:
 
-	typedef typename base_type::value_type              value_type;
-	typedef typename base_type::pointer                 pointer;
-	typedef typename base_type::const_pointer           const_pointer;
-	typedef typename base_type::reference               reference;
-	typedef typename base_type::const_reference         const_reference;
-	typedef typename base_type::iterator                iterator;
-	typedef typename base_type::const_iterator          const_iterator;
-	typedef typename base_type::reverse_iterator        reverse_iterator;
-	typedef typename base_type::const_reverse_iterator  const_reverse_iterator;
-	typedef typename base_type::size_type               size_type;
-	typedef typename base_type::difference_type         difference_type;
+	typedef typename array_type::value_type              value_type;
+	typedef typename array_type::pointer                 pointer;
+	typedef typename array_type::const_pointer           const_pointer;
+	typedef typename array_type::reference               reference;
+	typedef typename array_type::const_reference         const_reference;
+	typedef typename array_type::iterator                iterator;
+	typedef typename array_type::const_iterator          const_iterator;
+	typedef typename array_type::reverse_iterator        reverse_iterator;
+	typedef typename array_type::const_reverse_iterator  const_reverse_iterator;
+	typedef typename array_type::size_type               size_type;
+	typedef typename array_type::difference_type         difference_type;
 
 
 // Variables
@@ -244,6 +245,7 @@ public:
 		}
 		return *this;
 	}
+
 	data_type&  operator *= ( value_type scalar ) {
 		std::for_each( begin( ), end( ),
 			[&]( value_type& v ) {
@@ -402,6 +404,7 @@ public:
 		y = vec.y;
 		return *this;
 	}
+
 	data_type&  operator = ( data_type&& vec ) {
 		swap( vec );
 		return *this;
@@ -575,6 +578,7 @@ public:
 		z = vec.z;
 		return *this;
 	}
+
 	data_type&  operator = ( data_type&& vec ) {
 		swap( vec );
 		return *this;
@@ -762,6 +766,7 @@ public:
 		w = vec.w;
 		return *this;
 	}
+
 	data_type&  operator = ( data_type&& vec ) {
 		swap( vec );
 		return *this;
