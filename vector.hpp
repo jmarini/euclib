@@ -118,9 +118,9 @@ private:
 // Constructors
 public:
 
-	vector( ) { }
-	vector( const data_type& vec ) { *this = vec; }
-	vector( data_type&& vec ) { *this = std::move(vec); }
+	vector( ) = default;
+	vector( const data_type& vec ) = default;
+	vector( data_type&& vec ) noexcept { *this = std::move(vec); } // TODO: add conditional noexcept
 	
 	vector( const array_type& data ) {
 		std::copy( data.begin( ), data.end( ), begin( ) );
@@ -129,7 +129,7 @@ public:
 
 #ifdef __GNUC__
 	template<typename... Args>
-	vector( value_type value, Args... values ) {
+	vector( value_type value, Args... values ) noexcept {
 		static_assert( sizeof...(values) < D,
 		               "too many arguments to constructor" );
 		fill_values( 0, value, values... );
@@ -141,10 +141,12 @@ public:
 		assert( values.size( ) <= D && "too many arguments to constructor" );
 		std::fill( std::copy( values.begin( ), values.end( ), m_data.begin( ) ),
 		           m_data.end( ), value_type( ) );
+		std::fill( typename array_type::iterator( &m_data[values.size( )] ),
+		           m_data.end( ), value_type( ) );
 	}
 #endif
 
-	// TODO: expression constructor ...
+	// TODO: expression constructor
 
 
 // Methods
@@ -152,35 +154,27 @@ private:
 
 #ifdef __GNUC__
 	template<typename... Args>
-	void fill_values( size_type i, value_type value, Args... values ) {
+	void fill_values( size_type i, value_type value, Args... values ) noexcept {
 		m_data[i] = value;
 		fill_values( i + 1, values... );
 	}
 
-	void fill_values( size_type i ) {
-		std::fill( typename array_type::iterator( &m_data[i] ), m_data.end( ), value_type( ) );
+	void fill_values( size_type i ) noexcept {
+		std::fill( typename array_type::iterator( &m_data[i] ),
+		           m_data.end( ), value_type( ) );
 	}
 #endif
 
 
 public:
-
-	data_type  normalize( ) const {
+	
+	// vector operations:
+	data_type normalize( ) const {
 		data_type vec = *this;
-		value_type len = length( );
-		std::for_each( vec.m_data.begin( ), vec.m_data.end( ),
-			[&]( value_type& v ) {
-				v /= len;
-		});
+		vec.normalize_ip( );
 		return vec;
 	}
-	void       normalize_ip( ) {
-		value_type len = length( );
-		std::for_each( begin( ), end( ),
-			[&]( value_type& v ) {
-				v /= len;
-		});
-	}
+	void normalize_ip( );
 
 	value_type  dot( const data_type& vec ) const {
 		value_type num = value_type( );
@@ -205,9 +199,9 @@ public:
 	const_pointer  data( ) const noexcept { return m_data.data( ); }
 
 	void  fill( const_reference value ) { std::fill( begin( ), end( ), value ); }
-	void  swap( data_type& vec ) { m_data.swap( vec.m_data ); } // TODO: add conditional noexcept
+	void  swap( data_type& vec ) noexcept { m_data.swap( vec.m_data ); } // TODO: add conditional noexcept
 
-	// iterators...
+	// iterators:
 	iterator                begin( ) noexcept { return m_data.begin( ); }
 	const_iterator          begin( ) const noexcept { return m_data.begin( ); }
 	iterator                end( ) noexcept { return m_data.end( ); }
@@ -231,14 +225,17 @@ public:
 	const_reference  operator [] ( size_type i ) const { return m_data[i]; }
 
 	data_type&  operator = ( const data_type& vec ) {
-		std::copy( vec.begin( ), vec.end( ), begin( ) );
+		if( &vec != this ) {
+			std::copy( vec.begin( ), vec.end( ), begin( ) );
+		}
 		return *this;
 	}
-	data_type&  operator = ( data_type&& vec ) {
+
+	data_type&  operator = ( data_type&& vec ) noexcept { // TODO: Add conditional noexcept
 		m_data.swap( vec.m_data );
 		return *this;
 	}
-	
+
 	data_type&  operator += ( const data_type& vec ) {
 		for( std::size_t i = 0; i < D; ++i ) {
 			m_data[i] += vec[i];
@@ -259,23 +256,35 @@ public:
 
 };
 
-//template<typename T, std::size_t D>
-//void swap( vector<T,D>& lhs, vector<T,D>& rhs ) noexcept( lhs.swap(rhs) ) { } // TODO: fill in...
-
 template<typename T, std::size_t D>
-bool operator == ( const vector<T,D>& lhs, const vector<T,D>& rhs ) {
-	auto itr = std::mismatch( lhs.begin( ), lhs.end( ), rhs.begin( ), equal<T> );
-	return itr.first == lhs.end( ) && itr.second == rhs.end( );
+void swap( vector<T,D>& lhs, vector<T,D>& rhs ) noexcept { lhs.swap( rhs ); } // TODO: add conditional noexcept
+
+// equality operators:
+template<typename T, std::size_t D> inline
+bool operator == ( const vector<T,D>& lhs, const vector<T,D>& rhs ) noexcept {
+	return std::equal( lhs.begin( ), lhs.end( ), rhs.begin( ), equal<T> );
 }
-
-template<typename T, std::size_t L, std::size_t R> inline // different size vectors always not equal
-constexpr bool operator == ( const vector<T,L>& lhs, const vector<T,R>& rhs ) { return false; }
-
 template<typename T, std::size_t D> inline
 bool operator != ( const vector<T,D>& lhs, const vector<T,D>& rhs ) { return !(lhs == rhs); }
 
+template<typename T, std::size_t L, std::size_t R> inline // different size vectors always not equal
+constexpr bool operator == ( const vector<T,L>& lhs, const vector<T,R>& rhs ) noexcept { return false; }
+
+template<typename T, std::size_t L, std::size_t R> inline // different size vectors always not equal
+constexpr bool operator != ( const vector<T,L>& lhs, const vector<T,R>& rhs ) noexcept { return true; }
+
+// vector operations:
 template<typename T, std::size_t D> inline
 T  dot( const vector<T,D>& lhs, const vector<T,D>& rhs ) { return lhs.dot( rhs ); }
+
+template<typename T, std::size_t D>
+void vector<T,D>::normalize_ip( ) {
+	T len = length( );
+	std::for_each( begin( ), end( ),
+		[&]( value_type& v ) {
+			v /= len;
+	});
+}
 
 
 
@@ -319,36 +328,36 @@ public:
 // Constructors
 public:
 
-	vector( const data_type& vec ) :
-		x( vec.x ), y( vec.y ) { }
-	vector( data_type&& vec ) :
-		x( vec.x ), y( vec.y ) {
+	vector( const data_type& vec ) noexcept
+		: x( vec.x ), y( vec.y ) { }
+	vector( data_type&& vec ) noexcept
+		: x( vec.x ), y( vec.y ) {
 		vec.x = vec.y = value_type( );
 	}
 	
-	vector( const array_type& data )
+	vector( const array_type& data ) noexcept
 		: x(data[0]), y(data[1]) { }
-	vector( array_type&& data ) {
-		std::swap(x,data[0]), std::swap(y,data[1]);
+	vector( array_type&& data ) noexcept
+		: x(data[0]), y(data[1]) {
+		data[0] = data[1] = value_type( );
 	}
 
-	vector( value_type first = value_type( ), value_type second = value_type( ) )
+	vector( value_type first = value_type( ), value_type second = value_type( ) ) noexcept
 		: x(first), y(second) { }
 
-	// TODO: expression constructor ...
+	// TODO: expression constructor
 
 
 // Methods
 public:
 
-	data_type  normalize( ) const {
+	// vector operations:
+	data_type normalize( ) const {
 		data_type vec = *this;
-		value_type len = length( );
-		vec.x /= len;
-		vec.y /= len;
+		vec.normalize_ip( );
 		return vec;
 	}
-	void       normalize_ip( ) {
+	void normalize_ip( ) {
 		value_type len = length( );
 		x /= len;
 		y /= len;
@@ -371,12 +380,12 @@ public:
 	const_pointer  data( ) const noexcept { return &x; }
 
 	void  fill( const_reference value ) { x = value; y = value; }
-	void  swap( data_type& vec ) { // TODO: add conditional noexcept
+	void  swap( data_type& vec ) noexcept { // TODO: add conditional noexcept
 		std::swap( x, vec.x );
 		std::swap( y, vec.y );
 	}
 
-	// iterators...
+	// iterators:
 	iterator                begin( ) noexcept { return iterator( &x ); }
 	const_iterator          begin( ) const noexcept { return const_iterator( &x ); }
 	iterator                end( ) noexcept { return iterator( &(&x)[2] ); }
@@ -400,12 +409,14 @@ public:
 	const_reference  operator [] ( size_type i ) const { return (&x)[i]; }
 
 	data_type&  operator = ( const data_type& vec ) {
-		x = vec.x;
-		y = vec.y;
+		if( &vec != *this ) {
+			x = vec.x;
+			y = vec.y;
+		}
 		return *this;
 	}
 
-	data_type&  operator = ( data_type&& vec ) {
+	data_type&  operator = ( data_type&& vec ) noexcept { // TODO: add conditional noexcept
 		swap( vec );
 		return *this;
 	}
@@ -473,22 +484,23 @@ public:
 // Constructors
 public:
 
-	vector( const data_type& vec )
+	vector( const data_type& vec ) noexcept
 		: x( vec.x ), y( vec.y ), z( vec.z ) { }
-	vector( data_type&& vec )
+	vector( data_type&& vec ) noexcept
 		: x( vec.x ), y( vec.y ), z( vec.z ) {
 		vec.x = vec.y = vec.z = value_type( );
 	}
 
-	vector( const vector<T,2>& vec, value_type third )
+	vector( const vector<T,2>& vec, value_type third ) noexcept
 		: x(vec.x), y(vec.y), z(third) { }
-	vector( value_type first, const vector<T,2>& vec )
+	vector( value_type first, const vector<T,2>& vec ) noexcept
 		: x(first), y(vec.x), z(vec.y) { }
 	
-	vector( const array_type& data )
+	vector( const array_type& data ) noexcept
 		: x(data[0]), y(data[1]), z(data[2]) { }
-	vector( array_type&& data ) {
-		std::swap(x,data[0]), std::swap(y,data[1]); std::swap(z,data[2]);
+	vector( array_type&& data ) noexcept
+		: x(data[0]), y(data[1]), z(data[2]) {
+		data[0] = data[1] = data[2] = value_type( );
 	}
 
 	vector( value_type first = value_type( ), value_type second = value_type( ),
@@ -501,15 +513,13 @@ public:
 // Methods
 public:
 
-	data_type  normalize( ) const {
+	// vector operations:
+	data_type normalize( ) const {
 		data_type vec = *this;
-		value_type len = length( );
-		vec.x /= len;
-		vec.y /= len;
-		vec.z /= len;
+		vec.normalize_ip( );
 		return vec;
 	}
-	void       normalize_ip( ) {
+	void normalize_ip( ) {
 		value_type len = length( );
 		x /= len;
 		y /= len;
@@ -535,21 +545,19 @@ public:
 
 	
 	value_type  length( ) const { return std::sqrt( length_sq( ) ); }
-	value_type  length_sq( ) const {
-		return x * x + y * y + z * z;
-	}
+	value_type  length_sq( ) const { return x * x + y * y + z * z; }
 
 	pointer        data( ) noexcept { return &x; }
 	const_pointer  data( ) const noexcept { return &x; }
 
 	void  fill( const_reference value ) { x = value; y = value; z = value; }
-	void  swap( data_type& vec ) { // TODO: add conditional noexcept
+	void  swap( data_type& vec ) noexcept { // TODO: add conditional noexcept
 		std::swap( x, vec.x );
 		std::swap( y, vec.y );
 		std::swap( z, vec.z );
 	}
 
-	// iterators...
+	// iterators:
 	iterator                begin( ) noexcept { return iterator( &x ); }
 	const_iterator          begin( ) const noexcept { return const_iterator( &x ); }
 	iterator                end( ) noexcept { return iterator( &(&x)[3] ); }
@@ -573,13 +581,15 @@ public:
 	const_reference  operator [] ( size_type i ) const { return (&x)[i]; }
 
 	data_type&  operator = ( const data_type& vec ) {
-		x = vec.x;
-		y = vec.y;
-		z = vec.z;
+		if( &vec != this ) {
+			x = vec.x;
+			y = vec.y;
+			z = vec.z;
+		}
 		return *this;
 	}
 
-	data_type&  operator = ( data_type&& vec ) {
+	data_type&  operator = ( data_type&& vec ) noexcept { // TODO: add conditional noexcept
 		swap( vec );
 		return *this;
 	}
@@ -662,52 +672,50 @@ public:
 // Constructors
 public:
 
-	vector( const data_type& vec )
+	vector( const data_type& vec ) noexcept
 		: x( vec.x ), y( vec.y ), z( vec.z ), w( vec.w ) { }
-	vector( data_type&& vec )
+	vector( data_type&& vec ) noexcept
 		: x( vec.x ), y( vec.y ), z( vec.z ), w( vec.w ) {
 		vec.x = vec.y = vec.z = vec.w = value_type( );
 	}
 
-	vector( const vector<T,2>& first_vec, const vector<T,2>& second_vec )
+	vector( const vector<T,2>& first_vec, const vector<T,2>& second_vec ) noexcept
 		: x(first_vec.x), y(first_vec.y), z(second_vec.x), w(second_vec.y) { }
-	vector( const vector<T,2>& vec, value_type third, value_type fourth )
+	vector( const vector<T,2>& vec, value_type third, value_type fourth ) noexcept
 		: x(vec.x), y(vec.y), z(third), w(fourth) { }
-	vector( value_type first, const vector<T,2>& vec, value_type fourth )
+	vector( value_type first, const vector<T,2>& vec, value_type fourth ) noexcept
 		: x(first), y(vec.x), z(vec.y), w(fourth) { }
-	vector( value_type first, value_type second, const vector<T,2>& vec )
+	vector( value_type first, value_type second, const vector<T,2>& vec ) noexcept
 		: x(first), y(second), z(vec.x), w(vec.y) { }
-	vector( const vector<T,3>& vec, value_type& fourth )
+	vector( const vector<T,3>& vec, value_type& fourth ) noexcept
 		: x(vec.x), y(vec.y), z(vec.z), w(fourth ) { }
-	vector( value_type first, const vector<T,3>& vec )
+	vector( value_type first, const vector<T,3>& vec ) noexcept
 		: x(first), y(vec.x), z(vec.y), w(vec.z) { }
 	
-	vector( const array_type& data )
+	vector( const array_type& data ) noexcept
 		: x(data[0]), y(data[1]), z(data[2]), w(data[3]) { }
-	vector( array_type&& data ) {
-		std::swap(x,data[0]), std::swap(y,data[1]); std::swap(z,data[2]); std::swap(w,data[3]);
+	vector( array_type&& data ) noexcept
+		: x(data[0]), y(data[1]), z(data[2]), w(data[3]) {
+		data[0] = data[1] = data[2] = data[3] = value_type( );
 	}
 
 	vector( value_type first = value_type( ), value_type second = value_type( ),
 	        value_type third = value_type( ), value_type fourth = value_type( ) )
 		: x(first), y(second), z(third), w(fourth) { }
 
-	// TODO: expression constructor ...
+	// TODO: expression constructor
 
 
 // Methods
 public:
 
-	data_type  normalize( ) const {
+	// vector operations:
+	data_type normalize( ) const {
 		data_type vec = *this;
-		value_type len = length( );
-		vec.x /= len;
-		vec.y /= len;
-		vec.z /= len;
-		vec.w /= len;
+		vec.normalize_ip( );
 		return vec;
 	}
-	void       normalize_ip( ) {
+	void normalize_ip( ) {
 		value_type len = length( );
 		x /= len;
 		y /= len;
@@ -721,9 +729,7 @@ public:
 
 	
 	value_type  length( ) const { return std::sqrt( length_sq( ) ); }
-	value_type  length_sq( ) const {
-		return x * x + y * y + z * z + w * w;
-	}
+	value_type  length_sq( ) const { return x * x + y * y + z * z + w * w; }
 
 	pointer        data( ) noexcept { return &x; }
 	const_pointer  data( ) const noexcept { return &x; }
@@ -736,7 +742,7 @@ public:
 		std::swap( w, vec.w );
 	}
 
-	// iterators...
+	// iterators:
 	iterator                begin( ) noexcept { return iterator( &x ); }
 	const_iterator          begin( ) const noexcept { return const_iterator( &x ); }
 	iterator                end( ) noexcept { return iterator( &(&x)[4] ); }
@@ -760,14 +766,16 @@ public:
 	const_reference  operator [] ( size_type i ) const { return (&x)[i]; }
 
 	data_type&  operator = ( const data_type& vec ) {
-		x = vec.x;
-		y = vec.y;
-		z = vec.z;
-		w = vec.w;
+		if( &vec != this ) {
+			x = vec.x;
+			y = vec.y;
+			z = vec.z;
+			w = vec.w;
+		}
 		return *this;
 	}
 
-	data_type&  operator = ( data_type&& vec ) {
+	data_type&  operator = ( data_type&& vec ) noexcept { // TODO: add conditional noexcept
 		swap( vec );
 		return *this;
 	}
@@ -807,9 +815,9 @@ typedef vector<double,2>      vector2d;
 typedef vector<double,3>      vector3d;
 typedef vector<double,4>      vector4d;
 
-typedef vector<long double,2> vector2ld;
-typedef vector<long double,3> vector3ld;
-typedef vector<long double,4> vector4ld;
+typedef vector<long double,2>  vector2ld;
+typedef vector<long double,3>  vector3ld;
+typedef vector<long double,4>  vector4ld;
 
 }  // End namespace euclib
 

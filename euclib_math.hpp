@@ -82,28 +82,28 @@ namespace euclib {
 //   can be made about the exactness of type T
 
 	template<typename T>
-	inline bool equal( T lhs, T rhs );
+	inline bool equal( T lhs, T rhs ) noexcept;
 
 	template<typename T>
-	inline bool not_equal( T lhs, T rhs ) {
+	inline bool not_equal( T lhs, T rhs ) noexcept {
 		return !equal( lhs, rhs );
 	}
 
 	template<typename T>
-	inline bool less_than( T lhs, T rhs );
+	inline bool less_than( T lhs, T rhs ) noexcept;
 
 	template<typename T>
-	inline bool greater_than( T lhs, T rhs ) {
+	inline bool greater_than( T lhs, T rhs ) noexcept {
 		return less_than( rhs, lhs );
 	}
 
 	template<typename T>
-	inline bool less_than_eq( T lhs, T rhs ) {
+	inline bool less_than_eq( T lhs, T rhs ) noexcept {
 		return !less_than( rhs, lhs);
 	}
 
 	template<typename T>
-	inline bool greater_than_eq( T lhs, T rhs ) {
+	inline bool greater_than_eq( T lhs, T rhs ) noexcept {
 		return !less_than( lhs, rhs);
 	}
 
@@ -114,43 +114,43 @@ namespace euclib {
 namespace detail {
 
 	template<typename T>
-	inline bool equal( T lhs, T rhs, mpl::inaccurate_tag ) {
+	inline bool equal( T lhs, T rhs, mpl::inaccurate_tag ) noexcept {
 		return std::abs( lhs - rhs ) <= std::numeric_limits<T>::epsilon( ) *
 		                                ( std::abs(lhs) + std::abs(rhs) + T(1.0) );
 	}
 
 	template<typename T>
-	inline bool equal( T lhs, T rhs, mpl::accurate_tag ) {
+	inline bool equal( T lhs, T rhs, mpl::accurate_tag ) noexcept {
 		return lhs == rhs;
 	}
 
 
 
 	template<typename T>
-	inline bool less_than( T lhs, T rhs, mpl::inaccurate_tag ) {
+	inline bool less_than( T lhs, T rhs, mpl::inaccurate_tag ) noexcept {
 		return rhs - lhs > std::numeric_limits<T>::epsilon( ) *
 		                   ( std::abs(lhs) + std::abs(rhs) + T(1.0) );
 	}
 
 	template<typename T>
-	inline bool less_than( T lhs, T rhs, mpl::accurate_tag ) {
+	inline bool less_than( T lhs, T rhs, mpl::accurate_tag ) noexcept {
 		return lhs < rhs;
 	}
 
 	// floating to floating
 	template<typename T, typename U>
-	inline T round_nearest_cast( U value, mpl::inaccurate_tag, mpl::inaccurate_tag ) {
+	inline T round_nearest_cast( U value, mpl::inaccurate_tag, mpl::inaccurate_tag ) noexcept {
 		return static_cast<T>(value);
 	}
 
 	// integer to integer
 	template<typename T, typename U>
-	inline T round_nearest_cast( U value, mpl::accurate_tag, mpl::accurate_tag ) {
+	inline T round_nearest_cast( U value, mpl::accurate_tag, mpl::accurate_tag ) noexcept {
 		return static_cast<T>(value);
 	}
 	// integer to floating
 	template<typename T, typename U>
-	inline T round_nearest_cast( U value, mpl::accurate_tag, mpl::inaccurate_tag ) {
+	inline T round_nearest_cast( U value, mpl::accurate_tag, mpl::inaccurate_tag ) noexcept {
 		return static_cast<T>(value);
 	}
 	
@@ -181,12 +181,12 @@ namespace detail {
 
 
 	template<typename T>
-	inline bool equal( T lhs, T rhs ) {
+	inline bool equal( T lhs, T rhs ) noexcept {
 		return detail::equal( lhs, rhs, typename mpl::accuracy_traits<T>::category_type( ) );
 	}
 
 	template<typename T>
-	inline bool less_than( T lhs, T rhs ) {
+	inline bool less_than( T lhs, T rhs ) noexcept {
 		return detail::less_than( lhs, rhs, typename mpl::accuracy_traits<T>::category_type( ) );
 	}
 	
