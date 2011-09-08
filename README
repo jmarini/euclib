@@ -15,15 +15,17 @@ about:
 	and use until finalization of those aspects.
 	
 note on compilation:
-	This project is partially an exploration of the new C++0x language features
+	This project is partially an exploration of the new C++11 language features
 	by myself, as well as an exploration into generic library design and thus this
 	project extensively uses C++0x constructs and language features, most notably:
 		rvalue references
 		variadic templates
 		static_assert
 		intializer lists
+		lambdas
 		auto
-		nullptr
+		constexpr
+		noexcept
 	Make sure you are using at least gcc 4.6 with the -std=c++0x flag or a
 	compiler that will support these features.  Additionally, I am using some
 	boost dependencies so having boost installed to <boost/...> is required.
